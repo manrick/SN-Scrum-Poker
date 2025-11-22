@@ -18,21 +18,82 @@
   animation: spin 2s linear infinite;
 }
 
+/* Story Selected State */
+.story-selected-state {
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.story-selected-icon {
+  font-size: 4rem;
+  margin-bottom: 2rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.story-preview {
+  background: #f0fff4;
+  border: 1px solid #9ae6b4;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-top: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.story-preview .story-number {
+  background: #38a169;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  min-width: 60px;
+  text-align: center;
+}
+
+.story-preview .story-title {
+  color: #22543d;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-.waiting-state h2 {
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.waiting-state h2,
+.story-selected-state h2 {
   color: #2d3748;
   font-size: 2rem;
   margin-bottom: 1rem;
 }
 
-.waiting-state p {
+.waiting-state p,
+.story-selected-state p {
   color: #718096;
   font-size: 1.1rem;
   line-height: 1.6;
+}
+
+/* Error State */
+.error-state {
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.error-state p {
+  color: #e53e3e;
+  font-size: 1.1rem;
+  background: #fed7d7;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #feb2b2;
 }
 
 /* Voting State */
@@ -71,6 +132,16 @@
   font-weight: 600;
 }
 
+.timer-text.time-up {
+  background: #e53e3e !important;
+  animation: blink 1s linear infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.5; }
+}
+
 .story-title {
   color: #2d3748;
   font-size: 1.4rem;
@@ -96,6 +167,42 @@
   height: 100%;
   background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
   transition: width 0.1s linear;
+}
+
+.timer-progress.expired {
+  background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+}
+
+/* Time Up State */
+.time-up-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: #fed7d7;
+  border-radius: 12px;
+  border: 1px solid #feb2b2;
+}
+
+.time-up-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.time-up-state h3 {
+  color: #9b2c2c;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.time-up-state p {
+  color: #742a2a;
+  margin: 0;
 }
 
 /* Voted State */

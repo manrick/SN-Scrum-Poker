@@ -5,6 +5,34 @@ declare global {
         namespace Internal {
             interface Keys extends KeysRegistry {
                 explicit: {
+                    '21729a3683d13210792e16dfeeaad339': {
+                        table: 'sys_scope_privilege'
+                        id: '21729a3683d13210792e16dfeeaad339'
+                    }
+                    '25729a3683d13210792e16dfeeaad348': {
+                        table: 'sys_scope_privilege'
+                        id: '25729a3683d13210792e16dfeeaad348'
+                    }
+                    '65729a3683d13210792e16dfeeaad34c': {
+                        table: 'sys_scope_privilege'
+                        id: '65729a3683d13210792e16dfeeaad34c'
+                    }
+                    '6b089efe83d13210792e16dfeeaad3d9': {
+                        table: 'sys_scope_privilege'
+                        id: '6b089efe83d13210792e16dfeeaad3d9'
+                    }
+                    '9849dab283153210792e16dfeeaad3f3': {
+                        table: 'sys_scope_privilege'
+                        id: '9849dab283153210792e16dfeeaad3f3'
+                    }
+                    a1729a3683d13210792e16dfeeaad33e: {
+                        table: 'sys_scope_privilege'
+                        id: 'a1729a3683d13210792e16dfeeaad33e'
+                    }
+                    ad729eb283d13210792e16dfeeaad343: {
+                        table: 'sys_scope_privilege'
+                        id: 'ad729eb283d13210792e16dfeeaad343'
+                    }
                     bom_json: {
                         table: 'sys_module'
                         id: '5add7e704d43456bbf6377aa2bd92a04'
@@ -12,6 +40,18 @@ declare global {
                     create_session_route: {
                         table: 'sys_ws_operation'
                         id: '72334202f37f404ea62242c36396ee24'
+                    }
+                    d2a41e7683d13210792e16dfeeaad396: {
+                        table: 'sys_scope_privilege'
+                        id: 'd2a41e7683d13210792e16dfeeaad396'
+                    }
+                    e1729a3683d13210792e16dfeeaad342: {
+                        table: 'sys_scope_privilege'
+                        id: 'e1729a3683d13210792e16dfeeaad342'
+                    }
+                    f5729a3683d13210792e16dfeeaad35e: {
+                        table: 'sys_scope_privilege'
+                        id: 'f5729a3683d13210792e16dfeeaad35e'
                     }
                     finalize_story_route: {
                         table: 'sys_ws_operation'
@@ -105,6 +145,14 @@ declare global {
                         table: 'sys_ws_operation'
                         id: '5ba6e0026b844b36afa8c4a62cd8ff0f'
                     }
+                    'x_250424_sn_scrum8/____insertStyle-0ao2un1E': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'ef3c4ac58ef4422eb9fa1b0c38b5e2c9'
+                    }
+                    'x_250424_sn_scrum8/____insertStyle-0ao2un1E.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '98ce41efec974df1adf22005e4b86da9'
+                    }
                     'x_250424_sn_scrum8/____insertStyle-7XR2_AQS': {
                         table: 'sys_ux_lib_asset'
                         id: 'dc6e9fa2ef1442a2b5444ada6baf9996'
@@ -148,10 +196,12 @@ declare global {
                     'x_250424_sn_scrum8/____insertStyle-CoK7pRZc': {
                         table: 'sys_ux_lib_asset'
                         id: '25fb7c851ff94995b0f4488154a0409f'
+                        deleted: true
                     }
                     'x_250424_sn_scrum8/____insertStyle-CoK7pRZc.js.map': {
                         table: 'sys_ux_lib_asset'
                         id: '314fc7f849574ed79b8b361afd3b4db1'
+                        deleted: true
                     }
                     'x_250424_sn_scrum8/____insertStyle-Dag9rpHz': {
                         table: 'sys_ux_lib_asset'

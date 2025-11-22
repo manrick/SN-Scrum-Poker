@@ -12,7 +12,8 @@ export default function VotingManager({
   participantCount, 
   votes, 
   onRevealVotes, 
-  onFinalizePoints 
+  onFinalizePoints,
+  isScrumMaster = true
 }) {
   const [timeRemaining, setTimeRemaining] = useState(votingDuration);
   const [selectedFinalPoints, setSelectedFinalPoints] = useState('');
@@ -28,6 +29,23 @@ export default function VotingManager({
       return () => clearInterval(interval);
     }
   }, [sessionState, votingStartTime, votingDuration]);
+
+  // Helper function to safely extract values from story object
+  const getSafeValue = (field) => {
+    if (!field) return null;
+    if (typeof field === 'object' && field.display_value !== undefined) {
+      return field.display_value;
+    }
+    if (typeof field === 'object' && field.value !== undefined) {
+      return field.value;
+    }
+    return field;
+  };
+
+  // Safe story property accessors
+  const storyNumber = getSafeValue(story?.number) || 'N/A';
+  const storyShortDescription = getSafeValue(story?.short_description) || 'No description';
+  const storyDescription = getSafeValue(story?.description);
 
   const getProgressPercentage = () => {
     if (votingDuration === 0) return 100;
@@ -54,16 +72,26 @@ export default function VotingManager({
     }
   };
 
+  if (!story) {
+    return (
+      <div className="voting-manager">
+        <div className="error-message">
+          <p>No story selected. Please select a story to begin voting.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="voting-manager">
       <div className="story-display">
         <h3>Current Story</h3>
         <div className="story-info">
-          <div className="story-number">{story.number}</div>
+          <div className="story-number">{storyNumber}</div>
           <div className="story-description">
-            <h4>{story.short_description}</h4>
-            {story.description && (
-              <p className="story-details">{story.description}</p>
+            <h4>{storyShortDescription}</h4>
+            {storyDescription && (
+              <p className="story-details">{storyDescription}</p>
             )}
           </div>
         </div>
@@ -90,15 +118,21 @@ export default function VotingManager({
             </div>
           </div>
 
-          <div className="voting-controls">
-            <button 
-              className="reveal-button"
-              onClick={onRevealVotes}
-              disabled={voteCount === 0}
-            >
-              Reveal Votes ({voteCount})
-            </button>
-          </div>
+          {isScrumMaster ? (
+            <div className="voting-controls">
+              <button 
+                className="reveal-button"
+                onClick={onRevealVotes}
+                disabled={voteCount === 0}
+              >
+                Reveal Votes ({voteCount})
+              </button>
+            </div>
+          ) : (
+            <div className="participant-message">
+              <p>Submit your estimate on the participant interface. Waiting for scrum master to reveal votes.</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -109,7 +143,7 @@ export default function VotingManager({
           <div className="votes-grid">
             {votes.map((vote, index) => (
               <div key={index} className="vote-card">
-                <div className="voter-name">{vote.voter}</div>
+                <div className="voter-name">{vote.voter || 'Unknown'}</div>
                 <div className={`vote-value ${vote.vote}`}>
                   {vote.vote === 'unknown' ? '?' : vote.vote}
                 </div>
@@ -131,27 +165,33 @@ export default function VotingManager({
             </div>
           </div>
 
-          <div className="finalize-section">
-            <h5>Finalize Story Points:</h5>
-            <div className="points-selector">
-              {FIBONACCI_VALUES.map(value => (
-                <button
-                  key={value}
-                  className={`point-option ${selectedFinalPoints === value ? 'selected' : ''}`}
-                  onClick={() => setSelectedFinalPoints(value)}
-                >
-                  {value === 'unknown' ? '?' : value}
-                </button>
-              ))}
+          {isScrumMaster ? (
+            <div className="finalize-section">
+              <h5>Finalize Story Points:</h5>
+              <div className="points-selector">
+                {FIBONACCI_VALUES.map(value => (
+                  <button
+                    key={value}
+                    className={`point-option ${selectedFinalPoints === value ? 'selected' : ''}`}
+                    onClick={() => setSelectedFinalPoints(value)}
+                  >
+                    {value === 'unknown' ? '?' : value}
+                  </button>
+                ))}
+              </div>
+              <button 
+                className="finalize-button"
+                onClick={handleFinalize}
+                disabled={!selectedFinalPoints}
+              >
+                Set Story Points
+              </button>
             </div>
-            <button 
-              className="finalize-button"
-              onClick={handleFinalize}
-              disabled={!selectedFinalPoints}
-            >
-              Set Story Points
-            </button>
-          </div>
+          ) : (
+            <div className="participant-message">
+              <p>Waiting for scrum master to finalize the story points.</p>
+            </div>
+          )}
         </div>
       )}
     </div>

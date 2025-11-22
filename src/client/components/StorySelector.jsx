@@ -14,22 +14,62 @@ export default function StorySelector({ service, onStorySelected }) {
   const loadStories = async () => {
     try {
       setLoading(true);
-      const storiesData = await service.getStories();
-      setStories(storiesData);
+      setError('');
+      console.log('Loading stories...');
+      const response = await service.getStories();
+      console.log('Stories response received:', response);
+      
+      // Handle both direct array and wrapped object response
+      const storiesData = response.stories || response || [];
+      console.log('Processed stories data:', storiesData);
+      
+      // Ensure we have an array
+      if (Array.isArray(storiesData)) {
+        console.log(`Setting ${storiesData.length} stories`);
+        setStories(storiesData);
+        if (storiesData.length === 0) {
+          setError('No active stories found. Create some stories in the rm_story table to use for estimation.');
+        }
+      } else {
+        console.error('Invalid stories data format:', storiesData);
+        setStories([]);
+        setError('Invalid data format received from server');
+      }
     } catch (error) {
-      setError('Failed to load stories');
       console.error('Error loading stories:', error);
+      setError(`Failed to load stories: ${error.message}`);
+      setStories([]); // Ensure stories is always an array
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredStories = stories.filter(story => {
+  // Helper functions to safely extract story properties
+  const getSafeValue = (field) => {
+    if (!field) return null;
+    if (typeof field === 'object' && field.display_value !== undefined) {
+      return field.display_value;
+    }
+    if (typeof field === 'object' && field.value !== undefined) {
+      return field.value;
+    }
+    return field;
+  };
+
+  const getSafeStoryId = (story) => getSafeValue(story?.sys_id);
+  const getSafeNumber = (story) => getSafeValue(story?.number);
+  const getSafeShortDescription = (story) => getSafeValue(story?.short_description);
+  const getSafeDescription = (story) => getSafeValue(story?.description);
+  const getSafeStoryPoints = (story) => getSafeValue(story?.story_points);
+
+  // Defensive programming: ensure stories is always an array before filtering
+  const safeStories = Array.isArray(stories) ? stories : [];
+  
+  const filteredStories = safeStories.filter(story => {
     if (!searchTerm) return true;
     
-    const number = typeof story.number === 'object' ? story.number.display_value : story.number;
-    const shortDesc = typeof story.short_description === 'object' ? 
-      story.short_description.display_value : story.short_description;
+    const number = getSafeNumber(story);
+    const shortDesc = getSafeShortDescription(story);
     
     return (
       number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -38,18 +78,11 @@ export default function StorySelector({ service, onStorySelected }) {
   });
 
   const handleStoryClick = (story) => {
-    const storyId = typeof story.sys_id === 'object' ? story.sys_id.value : story.sys_id;
-    const number = typeof story.number === 'object' ? story.number.display_value : story.number;
-    const shortDesc = typeof story.short_description === 'object' ? 
-      story.short_description.display_value : story.short_description;
-    const description = typeof story.description === 'object' ? 
-      story.description.display_value : story.description;
-
     onStorySelected({
-      sys_id: storyId,
-      number: number,
-      short_description: shortDesc,
-      description: description
+      sys_id: getSafeStoryId(story),
+      number: getSafeNumber(story),
+      short_description: getSafeShortDescription(story),
+      description: getSafeDescription(story)
     });
   };
 
@@ -80,19 +113,28 @@ export default function StorySelector({ service, onStorySelected }) {
         />
       </div>
 
+      {safeStories.length > 0 && (
+        <div className="story-count">
+          Showing {filteredStories.length} of {safeStories.length} stories
+        </div>
+      )}
+
       <div className="stories-list">
         {filteredStories.length === 0 ? (
           <div className="no-stories">
-            {searchTerm ? 'No stories match your search.' : 'No stories available.'}
+            {searchTerm ? 
+              'No stories match your search. Try a different search term.' : 
+              safeStories.length === 0 ?
+                'No stories available for estimation.' :
+                'No stories found.'
+            }
           </div>
         ) : (
           filteredStories.map(story => {
-            const storyId = typeof story.sys_id === 'object' ? story.sys_id.value : story.sys_id;
-            const number = typeof story.number === 'object' ? story.number.display_value : story.number;
-            const shortDesc = typeof story.short_description === 'object' ? 
-              story.short_description.display_value : story.short_description;
-            const currentPoints = typeof story.story_points === 'object' ? 
-              story.story_points.display_value : story.story_points;
+            const storyId = getSafeStoryId(story);
+            const number = getSafeNumber(story);
+            const shortDesc = getSafeShortDescription(story);
+            const currentPoints = getSafeStoryPoints(story);
 
             return (
               <div 
@@ -101,12 +143,12 @@ export default function StorySelector({ service, onStorySelected }) {
                 onClick={() => handleStoryClick(story)}
               >
                 <div className="story-header">
-                  <span className="story-number">{number}</span>
+                  <span className="story-number">{number || 'N/A'}</span>
                   {currentPoints && (
                     <span className="current-points">{currentPoints} pts</span>
                   )}
                 </div>
-                <div className="story-title">{shortDesc}</div>
+                <div className="story-title">{shortDesc || 'No description'}</div>
               </div>
             );
           })

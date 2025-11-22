@@ -28,6 +28,26 @@ export default function VotingInterface({
   const [timeRemaining, setTimeRemaining] = useState(votingDuration);
   const [submittingVote, setSubmittingVote] = useState(false);
 
+  // Helper function to safely extract values from story object
+  const getSafeValue = (field) => {
+    if (!field) return null;
+    if (typeof field === 'object' && field.display_value !== undefined) {
+      return field.display_value;
+    }
+    if (typeof field === 'object' && field.value !== undefined) {
+      return field.value;
+    }
+    return field;
+  };
+
+  // Safe story property accessors
+  const safeCurrentStory = currentStory ? {
+    id: getSafeValue(currentStory.sys_id) || getSafeValue(currentStory.id),
+    number: getSafeValue(currentStory.number) || 'N/A',
+    short_description: getSafeValue(currentStory.short_description) || 'No description',
+    description: getSafeValue(currentStory.description)
+  } : null;
+
   // Timer countdown
   useEffect(() => {
     if (sessionState === 'active' && votingStartTime) {
@@ -49,13 +69,15 @@ export default function VotingInterface({
   }, [sessionState, currentStory, hasVoted]);
 
   const handleCardClick = async (cardValue) => {
-    if (sessionState !== 'active' || hasVoted || submittingVote) return;
+    // Check if voting is still allowed
+    const votingTimeUp = timeRemaining <= 0;
+    if (sessionState !== 'active' || hasVoted || submittingVote || !safeCurrentStory || votingTimeUp) return;
 
     setSelectedVote(cardValue);
     setSubmittingVote(true);
 
     try {
-      const result = await service.submitVote(session.id, currentStory.id, cardValue);
+      const result = await service.submitVote(session.id, safeCurrentStory.id, cardValue);
       if (result.success) {
         onVoteSubmitted();
       } else {
@@ -83,93 +105,138 @@ export default function VotingInterface({
     </div>
   );
 
-  const renderVotingState = () => (
-    <div className="voting-state">
-      <div className="story-info">
-        <div className="story-header">
-          <span className="story-number">{currentStory.number}</span>
-          <div className="timer-info">
-            <span className="timer-text">
-              {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
-            </span>
-          </div>
-        </div>
-        <h3 className="story-title">{currentStory.short_description}</h3>
-        {currentStory.description && (
-          <p className="story-description">{currentStory.description}</p>
-        )}
-      </div>
-
-      <div className="timer-bar">
-        <div 
-          className="timer-progress" 
-          style={{ width: `${getProgressPercentage()}%` }}
-        />
-      </div>
-
-      {hasVoted ? (
-        <div className="voted-state">
-          <div className="voted-card">
-            <div className={`selected-card ${selectedVote}`}>
-              {selectedVote === 'unknown' ? '?' : selectedVote}
-            </div>
-            <p>✅ Vote submitted!</p>
-            <span>Waiting for others to vote...</span>
-          </div>
-        </div>
-      ) : (
-        <div className="voting-cards">
-          <h4>Select your estimate:</h4>
-          <div className="cards-grid">
-            {FIBONACCI_CARDS.map(card => (
-              <button
-                key={card.value}
-                className={`poker-card ${selectedVote === card.value ? 'selected' : ''} ${submittingVote ? 'disabled' : ''}`}
-                onClick={() => handleCardClick(card.value)}
-                disabled={submittingVote}
-              >
-                <span className="card-value">{card.label}</span>
-              </button>
-            ))}
-          </div>
+  const renderStorySelectedState = () => (
+    <div className="story-selected-state">
+      <div className="story-selected-icon">📋</div>
+      <h2>Story Selected</h2>
+      <p>The Scrum Master has selected a story. Voting will begin shortly...</p>
+      {safeCurrentStory && (
+        <div className="story-preview">
+          <div className="story-number">{safeCurrentStory.number}</div>
+          <div className="story-title">{safeCurrentStory.short_description}</div>
         </div>
       )}
     </div>
   );
 
-  const renderRevealingState = () => (
-    <div className="revealing-state">
-      <div className="story-info">
-        <span className="story-number">{currentStory.number}</span>
-        <h3 className="story-title">{currentStory.short_description}</h3>
-      </div>
+  const renderVotingState = () => {
+    if (!safeCurrentStory) {
+      return (
+        <div className="error-state">
+          <p>No story information available. Please contact the scrum master.</p>
+        </div>
+      );
+    }
 
-      <div className="results-header">
-        <h4>🎯 Vote Results</h4>
-      </div>
+    const votingTimeUp = timeRemaining <= 0;
 
-      <div className="votes-grid">
-        {votes.map((vote, index) => (
-          <div key={index} className="vote-result">
-            <div className="voter-name">{vote.voter}</div>
-            <div className={`result-card ${vote.vote}`}>
-              {vote.vote === 'unknown' ? '?' : vote.vote}
+    return (
+      <div className="voting-state">
+        <div className="story-info">
+          <div className="story-header">
+            <span className="story-number">{safeCurrentStory.number}</span>
+            <div className="timer-info">
+              <span className={`timer-text ${votingTimeUp ? 'time-up' : ''}`}>
+                {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+              </span>
             </div>
           </div>
-        ))}
-      </div>
+          <h3 className="story-title">{safeCurrentStory.short_description}</h3>
+          {safeCurrentStory.description && (
+            <p className="story-description">{safeCurrentStory.description}</p>
+          )}
+        </div>
 
-      <div className="waiting-master">
-        <p>Waiting for Scrum Master to finalize story points...</p>
+        <div className="timer-bar">
+          <div 
+            className={`timer-progress ${votingTimeUp ? 'expired' : ''}`}
+            style={{ width: `${getProgressPercentage()}%` }}
+          />
+        </div>
+
+        {votingTimeUp && !hasVoted ? (
+          <div className="time-up-state">
+            <div className="time-up-icon">⏰</div>
+            <h3>Time's Up!</h3>
+            <p>Voting time has expired. Waiting for scrum master to reveal results...</p>
+          </div>
+        ) : hasVoted ? (
+          <div className="voted-state">
+            <div className="voted-card">
+              <div className={`selected-card ${selectedVote}`}>
+                {selectedVote === 'unknown' ? '?' : selectedVote}
+              </div>
+              <p>✅ Vote submitted!</p>
+              <span>Waiting for others to vote...</span>
+            </div>
+          </div>
+        ) : (
+          <div className="voting-cards">
+            <h4>Select your estimate:</h4>
+            <div className="cards-grid">
+              {FIBONACCI_CARDS.map(card => (
+                <button
+                  key={card.value}
+                  className={`poker-card ${selectedVote === card.value ? 'selected' : ''} ${submittingVote ? 'disabled' : ''}`}
+                  onClick={() => handleCardClick(card.value)}
+                  disabled={submittingVote}
+                >
+                  <span className="card-value">{card.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
+
+  const renderRevealingState = () => {
+    if (!safeCurrentStory) {
+      return (
+        <div className="error-state">
+          <p>No story information available for results display.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="revealing-state">
+        <div className="story-info">
+          <span className="story-number">{safeCurrentStory.number}</span>
+          <h3 className="story-title">{safeCurrentStory.short_description}</h3>
+        </div>
+
+        <div className="results-header">
+          <h4>🎯 Vote Results</h4>
+        </div>
+
+        <div className="votes-grid">
+          {votes && votes.length > 0 ? votes.map((vote, index) => (
+            <div key={index} className="vote-result">
+              <div className="voter-name">{vote.voter || 'Unknown'}</div>
+              <div className={`result-card ${vote.vote || ''}`}>
+                {vote.vote === 'unknown' ? '?' : (vote.vote || 'N/A')}
+              </div>
+            </div>
+          )) : (
+            <p>No votes to display</p>
+          )}
+        </div>
+
+        <div className="waiting-master">
+          <p>Waiting for Scrum Master to finalize story points...</p>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="voting-interface">
       {sessionState === 'waiting' && renderWaitingState()}
-      {sessionState === 'active' && currentStory && renderVotingState()}
-      {sessionState === 'revealing' && currentStory && renderRevealingState()}
+      {sessionState === 'story_selected' && renderStorySelectedState()}
+      {sessionState === 'active' && renderVotingState()}
+      {sessionState === 'revealing' && renderRevealingState()}
     </div>
   );
 }

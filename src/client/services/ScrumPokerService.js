@@ -72,7 +72,9 @@ export class ScrumPokerService {
     // Get session participants
     async getParticipants(sessionId) {
         console.log('Getting participants for session:', sessionId)
-        return this.makeRestCall(`/session/${sessionId}/participants`)
+        const response = await this.makeRestCall(`/session/${sessionId}/participants`)
+        // Extract participants array from wrapped response
+        return response.participants || []
     }
 
     // Start voting for a story
@@ -115,6 +117,8 @@ export class ScrumPokerService {
     // Get list of stories from rm_story table
     async getStories() {
         console.log('Getting stories from rm_story table')
-        return this.makeRestCall('/stories')
+        const response = await this.makeRestCall('/stories')
+        // Extract stories array from wrapped response
+        return response.stories || []
     }
 }

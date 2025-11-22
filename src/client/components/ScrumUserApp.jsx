@@ -10,7 +10,7 @@ export default function ScrumUserApp() {
   const [sessionState, setSessionState] = useState('waiting');
   const [currentStory, setCurrentStory] = useState(null);
   const [votingStartTime, setVotingStartTime] = useState(null);
-  const [votingDuration, setVotingDuration] = useState(10);
+  const [votingDuration, setVotingDuration] = useState(300); // 5 minutes default
   const [hasVoted, setHasVoted] = useState(false);
   const [votes, setVotes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -29,8 +29,9 @@ export default function ScrumUserApp() {
           return;
         }
 
-        setSessionState(statusResult.state);
-        setVotingDuration(statusResult.voting_duration);
+        const newState = statusResult.state || 'waiting';
+        setSessionState(newState);
+        setVotingDuration(statusResult.voting_duration || 300);
         
         if (statusResult.current_story && statusResult.story_details) {
           const newStory = {
@@ -49,18 +50,15 @@ export default function ScrumUserApp() {
           setHasVoted(false);
         }
 
-        if (statusResult.voting_started_at) {
+        if (statusResult.voting_started_at && newState === 'active') {
           setVotingStartTime(new Date(statusResult.voting_started_at));
         } else {
           setVotingStartTime(null);
         }
 
-        // If votes are revealed, get them
-        if (statusResult.state === 'revealing') {
-          const votesResult = await service.revealVotes(currentSession.id);
-          if (votesResult.success) {
-            setVotes(votesResult.votes);
-          }
+        // Get votes from session status when they're revealed
+        if (newState === 'revealing' && statusResult.votes) {
+          setVotes(statusResult.votes);
         } else {
           setVotes([]);
         }

@@ -2,6 +2,20 @@
   max-width: 800px;
 }
 
+.error-message {
+  background: #fed7d7;
+  border: 1px solid #feb2b2;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  color: #9b2c2c;
+  font-size: 1.1rem;
+}
+
+.error-message p {
+  margin: 0;
+}
+
 .story-display {
   background: #f7fafc;
   border-radius: 12px;
@@ -118,6 +132,19 @@
 .reveal-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.participant-message {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.participant-message p {
+  margin: 0;
+  opacity: 0.9;
 }
 
 .votes-revealed {

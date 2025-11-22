@@ -2,7 +2,8 @@
     try {
         var stories = []
         var storyGr = new GlideRecord('rm_story')
-        storyGr.addQuery('state', '!=', 'closed')
+        storyGr.addQuery('state', '!=', '3')  // Exclude completed stories (state = 3)
+        storyGr.addQuery('active', 'true')    // Only active stories
         storyGr.orderBy('number')
         storyGr.setLimit(100) // Limit to prevent large result sets
         storyGr.query()

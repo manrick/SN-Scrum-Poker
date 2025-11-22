@@ -23,6 +23,9 @@
 .session-code {
   font-size: 1.1rem;
   opacity: 0.9;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .code-highlight {
@@ -32,6 +35,17 @@
   font-weight: 700;
   font-family: 'Courier New', monospace;
   font-size: 1.2rem;
+}
+
+.master-badge {
+  background: rgba(72, 187, 120, 0.9);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .back-button {
@@ -64,6 +78,116 @@
   padding: 2rem;
 }
 
+.info-banner {
+  background: #ebf8ff;
+  border: 1px solid #bee3f8;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  color: #2b6cb0;
+}
+
+.waiting-message {
+  text-align: center;
+  color: #718096;
+  padding: 3rem 1rem;
+}
+
+.waiting-message h3 {
+  color: #4a5568;
+  margin-bottom: 0.5rem;
+}
+
+/* Story Ready State */
+.story-ready {
+  max-width: 800px;
+}
+
+.story-ready .story-display {
+  background: #f0fff4;
+  border: 2px solid #9ae6b4;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.story-ready .story-display h3 {
+  color: #22543d;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.story-ready .story-info {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.story-ready .story-number {
+  background: #38a169;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  min-width: 60px;
+  text-align: center;
+}
+
+.story-ready .story-description h4 {
+  color: #22543d;
+  font-size: 1.3rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.story-ready .story-details {
+  color: #2f855a;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.voting-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.start-voting-button {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.start-voting-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(72, 187, 120, 0.3);
+}
+
+.change-story-button {
+  background: #f7fafc;
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.change-story-button:hover {
+  border-color: #cbd5e0;
+  background: #edf2f7;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .session-layout {
@@ -78,5 +202,14 @@
     flex-direction: column;
     gap: 1rem;
     text-align: center;
+  }
+  
+  .session-code {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .voting-controls {
+    flex-direction: column;
   }
 }

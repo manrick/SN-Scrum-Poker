@@ -32,6 +32,26 @@
                 responseData.votes_count = voteGr.getRowCount()
             }
             
+            // Include votes if they are being revealed
+            if (sessionGr.getValue('state') === 'revealing' && sessionGr.getValue('current_story')) {
+                var votes = []
+                var voteGr = new GlideRecord('x_250424_sn_scrum8_poker_vote')
+                voteGr.addQuery('session', sessionId)
+                voteGr.addQuery('story', sessionGr.getValue('current_story'))
+                voteGr.query()
+                
+                while (voteGr.next()) {
+                    var userGr = new GlideRecord('sys_user')
+                    if (userGr.get(voteGr.getValue('voter'))) {
+                        votes.push({
+                            voter: userGr.getDisplayValue(),
+                            vote: voteGr.getValue('vote_value')
+                        })
+                    }
+                }
+                responseData.votes = votes
+            }
+            
             response.setStatus(200)
             response.setBody(responseData)
         } else {
