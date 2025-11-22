@@ -4,11 +4,21 @@ var ScrumPokerAjax = Class.create()
 
 ScrumPokerAjax.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 
+  // Simple test method
+  generateSessionCode: function() {
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    var code = ''
+    for (var i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return JSON.stringify({ success: true, code: code })
+  },
+
   // Create a new poker session
   createSession: function() {
     try {
       var sessionName = this.getParameter('sysparm_session_name')
-      var sessionCode = this.generateSessionCode()
+      var sessionCode = this.generateSessionCodeInternal()
       var currentUser = gs.getUserID()
       
       gs.info('Creating session: ' + sessionName + ' for user: ' + currentUser)
@@ -348,8 +358,8 @@ ScrumPokerAjax.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
     }
   },
 
-  // Generate random session code
-  generateSessionCode: function() {
+  // Internal method to generate session code
+  generateSessionCodeInternal: function() {
     var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     var code = ''
     for (var i = 0; i < 6; i++) {

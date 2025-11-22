@@ -1,138 +1,120 @@
 export class ScrumPokerService {
     constructor() {
-        this.baseUrl = '/xmlhttp.do'
+        this.baseUrl = '/api/x_250424_sn_scrum8/scrum_poker'
     }
 
-    async makeAjaxCall(method, params = {}) {
-        return new Promise((resolve, reject) => {
-            console.log('Making Ajax call:', method, params)
+    async makeRestCall(endpoint, method = 'GET', data = null) {
+        try {
+            console.log(`Making ${method} request to:`, `${this.baseUrl}${endpoint}`)
+            console.log('Request data:', data)
             
-            // Create the GlideAjax call with the fully scoped name
-            const ga = new GlideAjax('x_250424_sn_scrum8.ScrumPokerAjax')
-            ga.addParam('sysparm_name', method)
-            
-            // Add all parameters
-            Object.keys(params).forEach(key => {
-                ga.addParam(key, params[key])
-                console.log('Added param:', key, params[key])
-            })
-
-            ga.getXML((response) => {
-                console.log('Raw Ajax response:', response)
-                
-                try {
-                    const responseText = response.responseText
-                    console.log('Response text:', responseText)
-                    
-                    if (!responseText) {
-                        throw new Error('Empty response from server')
-                    }
-                    
-                    let data
-                    try {
-                        data = JSON.parse(responseText)
-                    } catch (parseError) {
-                        console.error('JSON parse error:', parseError)
-                        console.log('Raw response that failed to parse:', responseText)
-                        throw new Error('Invalid JSON response from server: ' + responseText)
-                    }
-                    
-                    console.log('Parsed data:', data)
-                    
-                    if (data.success !== undefined) {
-                        if (data.success) {
-                            resolve(data)
-                        } else {
-                            reject(new Error(data.error || 'Unknown error'))
-                        }
-                    } else {
-                        resolve(data)
-                    }
-                } catch (error) {
-                    console.error('Error processing Ajax response:', error)
-                    reject(error)
-                }
-            })
-
-            // Add error handling for failed requests
-            ga.getXMLWait = function() {
-                console.error('Ajax call failed or timed out')
-                reject(new Error('Ajax call failed or timed out'))
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-UserToken': window.g_ck || '', // Include CSRF token if available
+                },
+                credentials: 'same-origin' // Include session cookies
             }
-        })
+            
+            if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+                options.body = JSON.stringify(data)
+            }
+            
+            const response = await fetch(`${this.baseUrl}${endpoint}`, options)
+            
+            console.log('Response status:', response.status)
+            console.log('Response ok:', response.ok)
+            
+            if (!response.ok) {
+                let errorText
+                try {
+                    const errorData = await response.json()
+                    errorText = errorData.error || errorData.message || `HTTP ${response.status}`
+                } catch (e) {
+                    errorText = await response.text()
+                }
+                console.error('HTTP Error:', response.status, errorText)
+                throw new Error(`HTTP ${response.status}: ${errorText}`)
+            }
+            
+            const responseData = await response.json()
+            console.log('Raw response data:', responseData)
+            
+            // ServiceNow REST APIs wrap responses in a "result" object
+            const actualData = responseData.result || responseData
+            console.log('Extracted data:', actualData)
+            
+            return actualData
+        } catch (error) {
+            console.error('REST API Error:', error)
+            throw error
+        }
     }
 
     // Create a new poker session
     async createSession(sessionName) {
         console.log('Creating session with name:', sessionName)
-        return this.makeAjaxCall('createSession', {
-            sysparm_session_name: sessionName
+        return this.makeRestCall('/session', 'POST', {
+            session_name: sessionName
         })
     }
 
     // Join a session using session code
     async joinSession(sessionCode) {
         console.log('Joining session with code:', sessionCode)
-        return this.makeAjaxCall('joinSession', {
-            sysparm_session_code: sessionCode
+        return this.makeRestCall('/session/join', 'POST', {
+            session_code: sessionCode
         })
     }
 
     // Get session participants
     async getParticipants(sessionId) {
         console.log('Getting participants for session:', sessionId)
-        return this.makeAjaxCall('getParticipants', {
-            sysparm_session_id: sessionId
-        })
+        return this.makeRestCall(`/session/${sessionId}/participants`)
     }
 
     // Start voting for a story
     async startVoting(sessionId, storyId) {
         console.log('Starting voting for session:', sessionId, 'story:', storyId)
-        return this.makeAjaxCall('startVoting', {
-            sysparm_session_id: sessionId,
-            sysparm_story_id: storyId
+        return this.makeRestCall(`/session/${sessionId}/voting/start`, 'POST', {
+            story_id: storyId
         })
     }
 
     // Submit a vote
     async submitVote(sessionId, storyId, voteValue) {
         console.log('Submitting vote:', sessionId, storyId, voteValue)
-        return this.makeAjaxCall('submitVote', {
-            sysparm_session_id: sessionId,
-            sysparm_story_id: storyId,
-            sysparm_vote_value: voteValue
+        return this.makeRestCall(`/session/${sessionId}/vote`, 'POST', {
+            story_id: storyId,
+            vote_value: voteValue
         })
     }
 
     // Reveal votes
     async revealVotes(sessionId) {
         console.log('Revealing votes for session:', sessionId)
-        return this.makeAjaxCall('revealVotes', {
-            sysparm_session_id: sessionId
-        })
+        return this.makeRestCall(`/session/${sessionId}/voting/reveal`, 'POST')
     }
 
     // Finalize story points
     async finalizeStoryPoints(sessionId, finalPoints) {
         console.log('Finalizing story points:', sessionId, finalPoints)
-        return this.makeAjaxCall('finalizeStoryPoints', {
-            sysparm_session_id: sessionId,
-            sysparm_final_points: finalPoints
+        return this.makeRestCall(`/session/${sessionId}/finalize`, 'POST', {
+            final_points: finalPoints
         })
     }
 
     // Get session status
     async getSessionStatus(sessionId) {
         console.log('Getting session status:', sessionId)
-        return this.makeAjaxCall('getSessionStatus', {
-            sysparm_session_id: sessionId
-        })
+        return this.makeRestCall(`/session/${sessionId}/status`)
     }
 
     // Get list of stories from rm_story table
     async getStories() {
         console.log('Getting stories from rm_story table')
-        return this.makeAjaxCall('getStories', {})
+        return this.makeRestCall('/stories')
     }
 }
