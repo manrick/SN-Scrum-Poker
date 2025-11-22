@@ -1,0 +1,8 @@
+// Import all Fluent API definitions
+import './roles/scrum-poker-roles.now.ts'
+import './tables/poker-session.now.ts'
+import './tables/session-participant.now.ts'
+import './tables/poker-vote.now.ts'
+import './script-includes/scrum-poker-ajax.now.ts'
+import './ui-pages/scrum-master.now.ts'
+import './ui-pages/scrum-user.now.ts'

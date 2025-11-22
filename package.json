@@ -1,0 +1,22 @@
+{
+    "name": "x-250424-sn-scrum-8-dem",
+    "version": "1.0.0",
+    "description": "[BUILD AGENT GENERATED]:  Interactive Scrum Poker application for story estimation with real-time collaboration, supporting multiple concurrent sessions with Scrum Master and User roles",
+    "license": "UNLICENSED",
+    "scripts": {
+        "build": "now-sdk build",
+        "deploy": "now-sdk install",
+        "transform": "now-sdk transform",
+        "types": "now-sdk dependencies"
+    },
+    "devDependencies": {
+        "@servicenow/sdk": "4.0.2",
+        "@servicenow/glide": "26.0.1",
+        "eslint": "8.50.0",
+        "@servicenow/eslint-plugin-sdk-app-plugin": "4.0.2"
+    },
+    "dependencies": {
+        "react": "18.2.0",
+        "react-dom": "18.2.0"
+    }
+}
