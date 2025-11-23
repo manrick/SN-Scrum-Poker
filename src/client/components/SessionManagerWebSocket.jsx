@@ -1,0 +1,383 @@
+import React, { useState, useEffect } from 'react';
+import StorySelector from './StorySelector.jsx';
+import VotingManager from './VotingManager.jsx';
+import ParticipantsList from './ParticipantsList.jsx';
+import './SessionManager.css';
+
+export default function SessionManagerWebSocket({ service, session, onBackToStart, setError }) {
+  const [sessionState, setSessionState] = useState('waiting');
+  const [currentStory, setCurrentStory] = useState(null);
+  const [participants, setParticipants] = useState([]);
+  const [votingStartTime, setVotingStartTime] = useState(null);
+  const [votingDuration, setVotingDuration] = useState(300);
+  const [votes, setVotes] = useState([]);
+  const [voteCount, setVoteCount] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [sessionWatchers, setSessionWatchers] = useState(null);
+
+  const isScrumMaster = session.isMaster !== false;
+
+  // Initialize record watchers - NO setInterval!
+  useEffect(() => {
+    let mounted = true;
+
+    const initializeWatchers = async () => {
+      try {
+        // Get initial session status
+        const [statusResult, participantsResult] = await Promise.all([
+          service.getSessionStatus(session.id),
+          service.getParticipants(session.id)
+        ]);
+
+        if (!mounted) return;
+
+        // Set initial state
+        if (statusResult && !statusResult.error) {
+          updateSessionFromStatus(statusResult);
+        }
+        if (participantsResult && Array.isArray(participantsResult)) {
+          setParticipants(participantsResult);
+        }
+
+        // Check AMB connection status
+        const status = service.getConnectionStatus();
+        setConnectionStatus(status.connected ? 'connected' : 'offline');
+
+        if (status.connected) {
+          // Set up record watchers
+          const watchers = service.watchSession(session.id, {
+            onSessionUpdate: (sessionRecord, operation) => {
+              console.log('Session update received:', sessionRecord, operation);
+              if (mounted && sessionRecord) {
+                updateSessionFromRecord(sessionRecord);
+              }
+            },
+            
+            onParticipantsUpdate: async ({ operation, participant }) => {
+              console.log('Participants update received:', operation, participant);
+              if (mounted) {
+                // Refresh participants list when changes occur
+                try {
+                  const updatedParticipants = await service.getParticipants(session.id);
+                  if (mounted && Array.isArray(updatedParticipants)) {
+                    setParticipants(updatedParticipants);
+                  }
+                } catch (error) {
+                  console.error('Error refreshing participants:', error);
+                }
+              }
+            },
+            
+            onVotesUpdate: async ({ operation, vote }) => {
+              console.log('Votes update received:', operation, vote);
+              if (mounted) {
+                // Update vote count and potentially refresh session status
+                try {
+                  const statusResult = await service.getSessionStatus(session.id);
+                  if (mounted && statusResult && !statusResult.error) {
+                    setVoteCount(statusResult.votes_count || 0);
+                    if (statusResult.votes) {
+                      setVotes(statusResult.votes);
+                    }
+                  }
+                } catch (error) {
+                  console.error('Error refreshing after vote update:', error);
+                }
+              }
+            }
+          });
+
+          setSessionWatchers(watchers);
+          setConnectionStatus('connected');
+          console.log('Record watchers established for session:', session.id);
+        } else {
+          setConnectionStatus('offline');
+          console.warn('AMB not available - real-time updates disabled');
+        }
+
+      } catch (error) {
+        console.error('Error initializing watchers:', error);
+        if (mounted) {
+          setConnectionStatus('error');
+          setError('Failed to initialize real-time updates');
+        }
+      }
+    };
+
+    initializeWatchers();
+
+    // Cleanup function
+    return () => {
+      mounted = false;
+      if (sessionWatchers) {
+        service.unwatchSession(sessionWatchers);
+        console.log('Cleaned up session watchers');
+      }
+    };
+  }, [service, session.id, setError]);
+
+  // Helper function to update session state from status API
+  const updateSessionFromStatus = (statusResult) => {
+    setSessionState(statusResult.state || 'waiting');
+    setVotingDuration(statusResult.voting_duration || 300);
+    
+    if (statusResult.current_story && statusResult.story_details) {
+      setCurrentStory({
+        id: statusResult.current_story,
+        ...statusResult.story_details
+      });
+    } else {
+      setCurrentStory(null);
+    }
+
+    if (statusResult.voting_started_at) {
+      setVotingStartTime(new Date(statusResult.voting_started_at));
+    } else {
+      setVotingStartTime(null);
+    }
+
+    if (statusResult.votes_count !== undefined) {
+      setVoteCount(statusResult.votes_count);
+    }
+
+    if (statusResult.votes) {
+      setVotes(statusResult.votes);
+    } else if (statusResult.state !== 'revealing') {
+      setVotes([]);
+    }
+  };
+
+  // Helper function to update session state from record watcher
+  const updateSessionFromRecord = (sessionRecord) => {
+    if (sessionRecord.state) {
+      setSessionState(sessionRecord.state);
+    }
+    if (sessionRecord.voting_duration) {
+      setVotingDuration(parseInt(sessionRecord.voting_duration) || 300);
+    }
+    if (sessionRecord.voting_started_at) {
+      setVotingStartTime(new Date(sessionRecord.voting_started_at));
+    }
+    // Note: story details and votes still need to be fetched via API
+    // as record watcher only gives us the session record
+    if (sessionRecord.current_story !== currentStory?.id) {
+      // Story changed - refresh session status to get story details
+      service.getSessionStatus(session.id)
+        .then(statusResult => {
+          if (statusResult && !statusResult.error) {
+            updateSessionFromStatus(statusResult);
+          }
+        })
+        .catch(error => console.error('Error fetching story details:', error));
+    }
+  };
+
+  const handleStorySelected = async (story) => {
+    if (!isScrumMaster) {
+      setError('Only the scrum master can select stories');
+      return;
+    }
+
+    setCurrentStory({
+      id: story.sys_id,
+      number: story.number,
+      short_description: story.short_description,
+      description: story.description
+    });
+    setSessionState('story_selected');
+    setVotes([]);
+    setVoteCount(0);
+  };
+
+  const handleStartVoting = async () => {
+    if (!isScrumMaster || !currentStory) {
+      setError('Only the scrum master can start voting');
+      return;
+    }
+
+    try {
+      const result = await service.startVoting(session.id, currentStory.id);
+      if (result.success) {
+        setVotes([]);
+        setVoteCount(0);
+        setVotingStartTime(new Date());
+        setSessionState('active');
+      } else {
+        setError(result.error || 'Failed to start voting');
+      }
+    } catch (error) {
+      setError('Failed to start voting. Please try again.');
+    }
+  };
+
+  const handleRevealVotes = async () => {
+    if (!isScrumMaster) {
+      setError('Only the scrum master can reveal votes');
+      return;
+    }
+
+    try {
+      const result = await service.revealVotes(session.id);
+      if (result.success) {
+        setVotes(result.votes);
+        setSessionState('revealing');
+      } else {
+        setError(result.error || 'Failed to reveal votes');
+      }
+    } catch (error) {
+      setError('Failed to reveal votes. Please try again.');
+    }
+  };
+
+  const handleFinalizePoints = async (points) => {
+    if (!isScrumMaster) {
+      setError('Only the scrum master can finalize story points');
+      return;
+    }
+
+    try {
+      const result = await service.finalizeStoryPoints(session.id, points);
+      if (result.success) {
+        setCurrentStory(null);
+        setVotes([]);
+        setVoteCount(0);
+        setVotingStartTime(null);
+        setSessionState('waiting');
+      } else {
+        setError(result.error || 'Failed to finalize story points');
+      }
+    } catch (error) {
+      setError('Failed to finalize story points. Please try again.');
+    }
+  };
+
+  const handleSelectDifferentStory = () => {
+    setCurrentStory(null);
+    setSessionState('waiting');
+    setVotes([]);
+    setVoteCount(0);
+    setVotingStartTime(null);
+  };
+
+  const getConnectionIcon = () => {
+    switch (connectionStatus) {
+      case 'connected': return '🔗';
+      case 'offline': return '⚠️';
+      case 'error': return '❌';
+      default: return '⏳';
+    }
+  };
+
+  const getConnectionText = () => {
+    switch (connectionStatus) {
+      case 'connected': return 'Live';
+      case 'offline': return 'Offline';
+      case 'error': return 'Error';
+      default: return 'Connecting...';
+    }
+  };
+
+  return (
+    <div className="session-manager">
+      <div className="session-header">
+        <div className="session-info">
+          <h2>{session.name}</h2>
+          <div className="session-code">
+            Code: <span className="code-highlight">{session.code}</span>
+            {isScrumMaster && <span className="master-badge">Scrum Master</span>}
+          </div>
+          <div className={`connection-status ${connectionStatus}`}>
+            <span className="connection-icon">{getConnectionIcon()}</span>
+            <span className="connection-text">{getConnectionText()}</span>
+          </div>
+        </div>
+        <button 
+          className="back-button"
+          onClick={onBackToStart}
+        >
+          ← New Session
+        </button>
+      </div>
+
+      <div className="session-layout">
+        <div className="main-content">
+          {!isScrumMaster && (
+            <div className="info-banner">
+              <p>You've joined as a participant. Only the scrum master can manage the session.</p>
+            </div>
+          )}
+
+          {sessionState === 'waiting' && isScrumMaster && (
+            <StorySelector 
+              service={service}
+              onStorySelected={handleStorySelected}
+            />
+          )}
+
+          {sessionState === 'story_selected' && isScrumMaster && currentStory && (
+            <div className="story-ready">
+              <div className="story-display">
+                <h3>Story Selected</h3>
+                <div className="story-info">
+                  <div className="story-number">{currentStory.number}</div>
+                  <div className="story-description">
+                    <h4>{currentStory.short_description}</h4>
+                    {currentStory.description && (
+                      <p className="story-details">{currentStory.description}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="voting-controls">
+                <button 
+                  className="start-voting-button"
+                  onClick={handleStartVoting}
+                >
+                  🚀 Start Voting ({votingDuration}s timer)
+                </button>
+                <button 
+                  className="change-story-button"
+                  onClick={handleSelectDifferentStory}
+                >
+                  ← Select Different Story
+                </button>
+              </div>
+            </div>
+          )}
+
+          {(sessionState === 'waiting' || sessionState === 'story_selected') && !isScrumMaster && (
+            <div className="waiting-message">
+              <h3>Waiting for Scrum Master</h3>
+              <p>
+                {sessionState === 'story_selected' 
+                  ? 'The scrum master has selected a story and will start voting soon.' 
+                  : 'The scrum master will select a story to estimate.'
+                }
+              </p>
+            </div>
+          )}
+
+          {(sessionState === 'active' || sessionState === 'revealing') && currentStory && (
+            <VotingManager
+              story={currentStory}
+              sessionState={sessionState}
+              votingStartTime={votingStartTime}
+              votingDuration={votingDuration}
+              voteCount={voteCount}
+              participantCount={participants.length}
+              votes={votes}
+              onRevealVotes={handleRevealVotes}
+              onFinalizePoints={handleFinalizePoints}
+              isScrumMaster={isScrumMaster}
+            />
+          )}
+        </div>
+
+        <div className="sidebar">
+          <ParticipantsList participants={participants} />
+        </div>
+      </div>
+    </div>
+  );
+}

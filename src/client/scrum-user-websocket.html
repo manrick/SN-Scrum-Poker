@@ -1,0 +1,17 @@
+<html>
+<head>
+  <title>Scrum Poker - User (WebSocket)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <sdk:now-ux-globals></sdk:now-ux-globals>
+  <script src="scrum-user-main-websocket.jsx" type="module"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    // Initialize AMB client global if available
+    if (typeof window.AMBClient === 'undefined' && typeof AMBClient !== 'undefined') {
+      window.AMBClient = AMBClient;
+    }
+  </script>
+</body>
+</html>
