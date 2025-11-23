@@ -33,6 +33,63 @@
   font-weight: 500;
 }
 
+/* Connection Status Styles for User App */
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #4a5568;
+}
+
+.connection-status.connected {
+  background: rgba(72, 187, 120, 0.1);
+  border-color: rgba(72, 187, 120, 0.3);
+  color: #22543d;
+}
+
+.connection-status.offline {
+  background: rgba(237, 137, 54, 0.1);
+  border-color: rgba(237, 137, 54, 0.3);
+  color: #c05621;
+}
+
+.connection-status.error {
+  background: rgba(245, 101, 101, 0.1);
+  border-color: rgba(245, 101, 101, 0.3);
+  color: #c53030;
+}
+
+.connection-status.connecting {
+  background: rgba(99, 179, 237, 0.1);
+  border-color: rgba(99, 179, 237, 0.3);
+  color: #2b6cb0;
+}
+
+.connection-icon {
+  font-size: 1rem;
+}
+
+.connection-text {
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.8rem;
+}
+
+.connection-status.connected .connection-icon {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 .leave-button {
   background: #e53e3e;
   color: white;
@@ -74,6 +131,11 @@
   
   .app-header h1 {
     font-size: 1.5rem;
+  }
+  
+  .session-info {
+    flex-wrap: wrap;
+    justify-content: center;
   }
   
   .app-content {

@@ -26,6 +26,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .code-highlight {
@@ -46,6 +47,108 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+/* Connection Status Styles */
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.connection-status.connected {
+  background: rgba(72, 187, 120, 0.2);
+  border-color: rgba(72, 187, 120, 0.4);
+}
+
+.connection-status.offline {
+  background: rgba(237, 137, 54, 0.2);
+  border-color: rgba(237, 137, 54, 0.4);
+}
+
+.connection-status.error {
+  background: rgba(245, 101, 101, 0.2);
+  border-color: rgba(245, 101, 101, 0.4);
+}
+
+.connection-status.connecting {
+  background: rgba(99, 179, 237, 0.2);
+  border-color: rgba(99, 179, 237, 0.4);
+}
+
+.connection-icon {
+  font-size: 1rem;
+}
+
+.connection-text {
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.8rem;
+}
+
+.connection-status.connected .connection-icon {
+  animation: pulse 2s infinite;
+}
+
+/* Refresh Button Styles */
+.refresh-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+  margin-left: 0.5rem;
+}
+
+.refresh-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+.refresh-button-inline {
+  background: #4299e1;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.2s;
+}
+
+.refresh-button-inline:hover {
+  background: #3182ce;
+  transform: translateY(-1px);
+}
+
+/* Connection Notice */
+.connection-notice {
+  background: #fef5e7;
+  border: 1px solid #f6ad55;
+  color: #c05621;
+  padding: 1rem;
+  margin: 0;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.connection-notice p {
+  margin: 0;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 .back-button {
@@ -211,5 +314,9 @@
   
   .voting-controls {
     flex-direction: column;
+  }
+
+  .connection-status {
+    margin-top: 0.5rem;
   }
 }

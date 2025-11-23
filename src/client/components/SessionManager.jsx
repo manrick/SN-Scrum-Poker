@@ -9,69 +9,185 @@ export default function SessionManager({ service, session, onBackToStart, setErr
   const [currentStory, setCurrentStory] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [votingStartTime, setVotingStartTime] = useState(null);
-  const [votingDuration, setVotingDuration] = useState(300); // 5 minutes default
+  const [votingDuration, setVotingDuration] = useState(300);
   const [votes, setVotes] = useState([]);
   const [voteCount, setVoteCount] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [sessionWatchers, setSessionWatchers] = useState(null);
 
-  // Check if user is scrum master
-  const isScrumMaster = session.isMaster !== false; // Default to true for backwards compatibility
+  const isScrumMaster = session.isMaster !== false;
 
-  // Poll for session status updates
+  // Initialize record watchers with graceful fallback
   useEffect(() => {
-    const pollInterval = setInterval(async () => {
+    let mounted = true;
+
+    const initializeWatchers = async () => {
       try {
+        // Get initial session status ONCE
         const [statusResult, participantsResult] = await Promise.all([
           service.getSessionStatus(session.id),
           service.getParticipants(session.id)
         ]);
 
-        if (statusResult.error) {
-          setError(statusResult.error);
-          return;
-        }
+        if (!mounted) return;
 
-        setSessionState(statusResult.state);
-        setVotingDuration(statusResult.voting_duration || 300);
-        
-        if (statusResult.current_story && statusResult.story_details) {
-          setCurrentStory({
-            id: statusResult.current_story,
-            ...statusResult.story_details
-          });
-        } else {
-          setCurrentStory(null);
+        // Set initial state from one-time fetch
+        if (statusResult && !statusResult.error) {
+          updateSessionFromStatus(statusResult);
         }
-
-        if (statusResult.voting_started_at) {
-          setVotingStartTime(new Date(statusResult.voting_started_at));
-        } else {
-          setVotingStartTime(null);
-        }
-
-        if (statusResult.votes_count !== undefined) {
-          setVoteCount(statusResult.votes_count);
-        }
-
-        // Get votes from session status if available (when revealing)
-        if (statusResult.votes) {
-          setVotes(statusResult.votes);
-        } else if (statusResult.state !== 'revealing') {
-          setVotes([]); // Clear votes when not revealing
-        }
-
         if (participantsResult && Array.isArray(participantsResult)) {
           setParticipants(participantsResult);
+        }
+
+        // Check AMB connection status
+        const status = service.getConnectionStatus();
+        console.log('Connection status:', status);
+
+        if (status.connected && status.ambAvailable) {
+          // Set up record watchers if AMB is available
+          const watchers = service.watchSession(session.id, {
+            onSessionUpdate: (sessionRecord, operation) => {
+              console.log('WEBSOCKET: Session update received:', sessionRecord, operation);
+              if (mounted && sessionRecord) {
+                updateSessionFromRecord(sessionRecord);
+              }
+            },
+            
+            onParticipantsUpdate: async ({ operation, participant }) => {
+              console.log('WEBSOCKET: Participants update received:', operation, participant);
+              if (mounted) {
+                try {
+                  const updatedParticipants = await service.getParticipants(session.id);
+                  if (mounted && Array.isArray(updatedParticipants)) {
+                    setParticipants(updatedParticipants);
+                  }
+                } catch (error) {
+                  console.error('Error refreshing participants:', error);
+                }
+              }
+            },
+            
+            onVotesUpdate: async ({ operation, vote }) => {
+              console.log('WEBSOCKET: Votes update received:', operation, vote);
+              if (mounted) {
+                try {
+                  const statusResult = await service.getSessionStatus(session.id);
+                  if (mounted && statusResult && !statusResult.error) {
+                    setVoteCount(statusResult.votes_count || 0);
+                    if (statusResult.votes) {
+                      setVotes(statusResult.votes);
+                    }
+                  }
+                } catch (error) {
+                  console.error('Error refreshing after vote update:', error);
+                }
+              }
+            }
+          });
+
+          setSessionWatchers(watchers);
+          setConnectionStatus('connected');
+          console.log('WEBSOCKET: Record watchers established successfully!');
         } else {
-          console.log('Participants result:', participantsResult);
-          setParticipants([]);
+          setConnectionStatus('offline');
+          console.warn('WEBSOCKET: AMB not available. Real-time updates disabled.');
+          console.log('AMB Client info:', status);
+        }
+
+      } catch (error) {
+        console.error('Error initializing watchers:', error);
+        if (mounted) {
+          setConnectionStatus('error');
+        }
+      }
+    };
+
+    initializeWatchers();
+
+    // Cleanup function
+    return () => {
+      mounted = false;
+      if (sessionWatchers) {
+        service.unwatchSession(sessionWatchers);
+        console.log('WEBSOCKET: Cleaned up session watchers');
+      }
+    };
+  }, [service, session.id]);
+
+  // Helper function to update session state from status API
+  const updateSessionFromStatus = (statusResult) => {
+    setSessionState(statusResult.state || 'waiting');
+    setVotingDuration(statusResult.voting_duration || 300);
+    
+    if (statusResult.current_story && statusResult.story_details) {
+      setCurrentStory({
+        id: statusResult.current_story,
+        ...statusResult.story_details
+      });
+    } else {
+      setCurrentStory(null);
+    }
+
+    if (statusResult.voting_started_at) {
+      setVotingStartTime(new Date(statusResult.voting_started_at));
+    } else {
+      setVotingStartTime(null);
+    }
+
+    if (statusResult.votes_count !== undefined) {
+      setVoteCount(statusResult.votes_count);
+    }
+
+    if (statusResult.votes) {
+      setVotes(statusResult.votes);
+    } else if (statusResult.state !== 'revealing') {
+      setVotes([]);
+    }
+  };
+
+  // Helper function to update session state from record watcher
+  const updateSessionFromRecord = (sessionRecord) => {
+    if (sessionRecord.state) {
+      setSessionState(sessionRecord.state);
+    }
+    if (sessionRecord.voting_duration) {
+      setVotingDuration(parseInt(sessionRecord.voting_duration) || 300);
+    }
+    if (sessionRecord.voting_started_at) {
+      setVotingStartTime(new Date(sessionRecord.voting_started_at));
+    }
+    
+    // Story details need to be fetched when record indicates change
+    if (sessionRecord.current_story !== currentStory?.id) {
+      service.getSessionStatus(session.id)
+        .then(statusResult => {
+          if (statusResult && !statusResult.error) {
+            updateSessionFromStatus(statusResult);
+          }
+        })
+        .catch(error => console.error('Error fetching story details:', error));
+    }
+  };
+
+  // Manual refresh when real-time is not available
+  const handleManualRefresh = async () => {
+    if (connectionStatus === 'offline') {
+      try {
+        const result = await service.refreshSessionData(session.id, {
+          onSessionUpdate: (data) => updateSessionFromStatus(data),
+          onParticipantsUpdate: ({ participants }) => {
+            if (participants) setParticipants(participants);
+          }
+        });
+        
+        if (result.success) {
+          console.log('Manual refresh successful');
         }
       } catch (error) {
-        console.error('Error polling session status:', error);
+        console.error('Manual refresh failed:', error);
       }
-    }, 2000); // Poll every 2 seconds
-
-    return () => clearInterval(pollInterval);
-  }, [service, session.id, setError]);
+    }
+  };
 
   const handleStorySelected = async (story) => {
     if (!isScrumMaster) {
@@ -79,7 +195,6 @@ export default function SessionManager({ service, session, onBackToStart, setErr
       return;
     }
 
-    // Just set the story, don't start voting yet
     setCurrentStory({
       id: story.sys_id,
       number: story.number,
@@ -161,6 +276,24 @@ export default function SessionManager({ service, session, onBackToStart, setErr
     setVotingStartTime(null);
   };
 
+  const getConnectionIcon = () => {
+    switch (connectionStatus) {
+      case 'connected': return '🔗';
+      case 'offline': return '⚠️';
+      case 'error': return '❌';
+      default: return '⏳';
+    }
+  };
+
+  const getConnectionText = () => {
+    switch (connectionStatus) {
+      case 'connected': return 'Live Updates';
+      case 'offline': return 'Manual Refresh';
+      case 'error': return 'Error';
+      default: return 'Connecting...';
+    }
+  };
+
   return (
     <div className="session-manager">
       <div className="session-header">
@@ -170,6 +303,19 @@ export default function SessionManager({ service, session, onBackToStart, setErr
             Code: <span className="code-highlight">{session.code}</span>
             {isScrumMaster && <span className="master-badge">Scrum Master</span>}
           </div>
+          <div className={`connection-status ${connectionStatus}`}>
+            <span className="connection-icon">{getConnectionIcon()}</span>
+            <span className="connection-text">{getConnectionText()}</span>
+            {connectionStatus === 'offline' && (
+              <button 
+                className="refresh-button"
+                onClick={handleManualRefresh}
+                title="Click to refresh session data"
+              >
+                🔄
+              </button>
+            )}
+          </div>
         </div>
         <button 
           className="back-button"
@@ -178,6 +324,12 @@ export default function SessionManager({ service, session, onBackToStart, setErr
           ← New Session
         </button>
       </div>
+
+      {connectionStatus === 'offline' && (
+        <div className="connection-notice">
+          <p>📡 Real-time updates are not available. Click the refresh button 🔄 to update session data manually.</p>
+        </div>
+      )}
 
       <div className="session-layout">
         <div className="main-content">
@@ -235,6 +387,14 @@ export default function SessionManager({ service, session, onBackToStart, setErr
                   : 'The scrum master will select a story to estimate.'
                 }
               </p>
+              {connectionStatus === 'offline' && (
+                <button 
+                  className="refresh-button-inline"
+                  onClick={handleManualRefresh}
+                >
+                  🔄 Check for Updates
+                </button>
+              )}
             </div>
           )}
 
