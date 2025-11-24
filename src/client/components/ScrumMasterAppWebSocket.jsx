@@ -10,8 +10,63 @@ export default function ScrumMasterAppWebSocket() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [ambInitialized, setAmbInitialized] = useState(false);
+
+  // Initialize AMB and track initialization status
+  useEffect(() => {
+    let mounted = true;
+
+    const initializeAMB = async () => {
+      try {
+        console.log('ScrumMasterApp: Initializing AMB...');
+        
+        // Wait for AMB to be initialized
+        await service.ensureAMBInitialization();
+        
+        if (mounted) {
+          setAmbInitialized(true);
+          console.log('ScrumMasterApp: AMB initialized successfully');
+          
+          // Check initial connection status
+          const status = service.getConnectionStatusSync();
+          setConnectionStatus(status.connected ? 'connected' : 'offline');
+        }
+      } catch (error) {
+        console.error('ScrumMasterApp: Error initializing AMB:', error);
+        if (mounted) {
+          setConnectionStatus('error');
+          setAmbInitialized(false);
+        }
+      }
+    };
+
+    initializeAMB();
+
+    return () => {
+      mounted = false;
+    };
+  }, [service]);
+
+  // Check connection status periodically
+  useEffect(() => {
+    if (!ambInitialized) return;
+
+    const checkConnection = () => {
+      const status = service.getConnectionStatusSync();
+      setConnectionStatus(status.connected ? 'connected' : 'offline');
+    };
+    
+    // Check periodically for connection status
+    const statusInterval = setInterval(checkConnection, 5000);
+    
+    return () => {
+      clearInterval(statusInterval);
+      service.disconnect();
+    };
+  }, [service, ambInitialized]);
 
   const handleSessionCreated = (session) => {
+    console.log('ScrumMasterApp: Session created:', session);
     setCurrentSession(session);
     setError('');
   };
@@ -21,26 +76,9 @@ export default function ScrumMasterAppWebSocket() {
     setError('');
   };
 
-  // Check connection status
-  useEffect(() => {
-    const checkConnection = () => {
-      const status = service.getConnectionStatus();
-      setConnectionStatus(status.connected ? 'connected' : 'offline');
-    };
-    
-    // Check immediately
-    checkConnection();
-    
-    // Check periodically for connection status only
-    const statusInterval = setInterval(checkConnection, 5000);
-    
-    return () => {
-      clearInterval(statusInterval);
-      service.disconnect();
-    };
-  }, [service]);
-
   const getConnectionIcon = () => {
+    if (!ambInitialized) return '⏳';
+    
     switch (connectionStatus) {
       case 'connected': return '🔗';
       case 'offline': return '⚠️';
@@ -49,6 +87,8 @@ export default function ScrumMasterAppWebSocket() {
   };
 
   const getConnectionText = () => {
+    if (!ambInitialized) return 'Initializing real-time...';
+    
     switch (connectionStatus) {
       case 'connected': return 'Real-time mode active';
       case 'offline': return 'Real-time unavailable';
@@ -61,7 +101,7 @@ export default function ScrumMasterAppWebSocket() {
       <header className="app-header">
         <h1>🃏 Scrum Poker Master</h1>
         <p>Manage your story estimation sessions with real-time updates</p>
-        <div className={`websocket-status ${connectionStatus}`}>
+        <div className={`websocket-status ${ambInitialized && connectionStatus === 'connected' ? 'connected' : 'initializing'}`}>
           <span className="status-icon">{getConnectionIcon()}</span>
           <span className="status-text">{getConnectionText()}</span>
         </div>
@@ -88,6 +128,7 @@ export default function ScrumMasterAppWebSocket() {
             session={currentSession}
             onBackToStart={handleBackToStart}
             setError={setError}
+            ambInitialized={ambInitialized}
           />
         )}
       </main>

@@ -141,7 +141,8 @@ export default function ScrumUserApp() {
     
     const newState = statusResult.state || 'waiting';
     console.log('📊 Setting session state to:', newState);
-    setSessionState(newState);
+    setSessionState(newState.value ? newState.value : newState);
+    
     setVotingDuration(statusResult.voting_duration || 20); // Default to 20 seconds
     
     if (statusResult.current_story && statusResult.story_details) {
@@ -189,7 +190,8 @@ export default function ScrumUserApp() {
     if (record.state) {
       const newState = record.state;
       console.log('🔄 AMB: Setting session state to:', newState);
-      setSessionState(newState);
+      //setSessionState(newState);
+      setSessionState(newState.value ? newState.value : newState);
       
       // If state changed to a new story, reset voting status
       if (newState === 'active' && record.current_story !== currentStory?.id) {
@@ -199,15 +201,15 @@ export default function ScrumUserApp() {
     }
     
     if (record.voting_duration) {
-      setVotingDuration(parseInt(record.voting_duration) || 20); // Default to 20 seconds
+      setVotingDuration(parseInt(record.voting_duration.value) || 20); // Default to 20 seconds
     }
     
     if (record.voting_started_at) {
-      setVotingStartTime(new Date(record.voting_started_at));
+      setVotingStartTime(new Date(record.voting_started_at.value));
     }
     
     // If story changed, need to fetch story details via API once
-    if (record.current_story && record.current_story !== currentStory?.id) {
+    if (record.current_story && record.current_story.value !== currentStory?.id) {
       console.log('🔄 AMB: Story changed, fetching details for:', record.current_story);
       service.getSessionStatus(currentSession.id)
         .then(statusResult => {

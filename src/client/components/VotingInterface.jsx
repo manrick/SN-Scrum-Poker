@@ -28,6 +28,9 @@ export default function VotingInterface({
   const [timeRemaining, setTimeRemaining] = useState(votingDuration);
   const [submittingVote, setSubmittingVote] = useState(false);
 
+  // Clean logging for key state changes only
+  console.log('VotingInterface:', { sessionState, storyId: currentStory?.id, hasVoted });
+
   // Helper function to safely extract values from story object
   const getSafeValue = (field) => {
     if (!field) return null;
@@ -69,6 +72,7 @@ export default function VotingInterface({
   }, [sessionState, currentStory, hasVoted]);
 
   const handleCardClick = async (cardValue) => {
+    console.log('Vote submitted:', cardValue);
     // Check if voting is still allowed
     const votingTimeUp = timeRemaining <= 0;
     if (sessionState !== 'active' || hasVoted || submittingVote || !safeCurrentStory || votingTimeUp) return;

@@ -10,6 +10,7 @@ export class ScrumPokerWebSocketService {
         this.subscriptions = new Map()
         this.isConnected = false
         this.initializationPromise = null
+        this.ambAvailable = false
         
         // Initialize AMB client after page is fully loaded and AMB is connected
         this.ensureAMBInitialization()
@@ -46,29 +47,45 @@ export class ScrumPokerWebSocketService {
      * Wait for AMB to be available and properly connected
      */
     async waitForAMBConnection() {
-        console.log('Waiting for AMB connection to be established...')
+        console.log('ScrumPokerWebSocketService: Waiting for AMB connection to be established...')
         
-        // First, wait for window.amb to be available (this works for scrum users)
-        await this.waitForAMBAvailable()
-        
-        // Then wait for the connection to be opened
-        await this.waitForConnectionOpened()
-        
-        // Finally initialize the client
-        await this.initializeAMBClient()
+        try {
+            // First, wait for window.amb to be available (this works for scrum users)
+            await this.waitForAMBAvailable()
+            
+            // Then wait for the connection to be opened
+            await this.waitForConnectionOpened()
+            
+            // Finally initialize the client
+            await this.initializeAMBClient()
+            
+            this.ambAvailable = true
+            console.log('✅ ScrumPokerWebSocketService: AMB fully initialized and available')
+        } catch (error) {
+            console.warn('⚠️ ScrumPokerWebSocketService: AMB not available, falling back to polling mode:', error.message)
+            this.ambAvailable = false
+            this.isConnected = false
+        }
     }
 
     /**
      * Wait for window.amb to be available (correct reference that works for scrum users)
      */
     waitForAMBAvailable() {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
+            let attempts = 0
+            const maxAttempts = 50 // 5 seconds max
+            
             const checkAMB = () => {
+                attempts++
+                
                 if (typeof window !== 'undefined' && window.amb && typeof window.amb.getClient === 'function') {
-                    console.log('✅ window.amb.getClient is available')
+                    console.log('✅ ScrumPokerWebSocketService: window.amb.getClient is available')
                     resolve()
+                } else if (attempts >= maxAttempts) {
+                    reject(new Error('AMB not available after timeout'))
                 } else {
-                    console.log('⏳ Waiting for window.amb.getClient...')
+                    console.log('⏳ ScrumPokerWebSocketService: Waiting for window.amb.getClient... attempt', attempts)
                     setTimeout(checkAMB, 100)
                 }
             }
@@ -80,22 +97,33 @@ export class ScrumPokerWebSocketService {
      * Wait for AMB connection to be in 'opened' state
      */
     waitForConnectionOpened() {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
+            let attempts = 0
+            const maxAttempts = 30 // 6 seconds max
+            
             const checkConnection = () => {
+                attempts++
+                
                 try {
                     const state = window.amb.getClient().getServerConnection().getState()
-                    console.log('AMB Connection State:', state)
+                    console.log('ScrumPokerWebSocketService: AMB Connection State:', state)
                     
                     if (state === 'opened') {
-                        console.log('✅ AMB connection is opened')
+                        console.log('✅ ScrumPokerWebSocketService: AMB connection is opened')
                         resolve()
+                    } else if (attempts >= maxAttempts) {
+                        reject(new Error(`AMB connection timeout. Final state: ${state}`))
                     } else {
-                        console.log('⏳ Waiting for AMB connection to open... Current state:', state)
+                        console.log('⏳ ScrumPokerWebSocketService: Waiting for AMB connection to open... Current state:', state, 'attempt', attempts)
                         setTimeout(checkConnection, 200)
                     }
                 } catch (error) {
-                    console.log('⏳ Error checking connection state, retrying...', error.message)
-                    setTimeout(checkConnection, 200)
+                    if (attempts >= maxAttempts) {
+                        reject(new Error(`AMB connection error: ${error.message}`))
+                    } else {
+                        console.log('⏳ ScrumPokerWebSocketService: Error checking connection state, retrying...', error.message, 'attempt', attempts)
+                        setTimeout(checkConnection, 200)
+                    }
                 }
             }
             checkConnection()
@@ -107,34 +135,35 @@ export class ScrumPokerWebSocketService {
      */
     async initializeAMBClient() {
         try {
-            console.log('Initializing AMB Client with confirmed connection...')
+            console.log('ScrumPokerWebSocketService: Initializing AMB Client with confirmed connection...')
             
             // Get the client using the correct reference that works for scrum users
             this.ambClient = window.amb.getClient()
             
             if (this.ambClient) {
-                console.log('AMB Client obtained from window.amb.getClient()')
-                console.log('Available AMB methods:', Object.getOwnPropertyNames(this.ambClient).filter(name => typeof this.ambClient[name] === 'function'))
+                console.log('ScrumPokerWebSocketService: AMB Client obtained from window.amb.getClient()')
+                console.log('ScrumPokerWebSocketService: Available AMB methods:', Object.getOwnPropertyNames(this.ambClient).filter(name => typeof this.ambClient[name] === 'function'))
                 
                 // Verify connection state one more time
                 const finalState = this.ambClient.getServerConnection().getState()
                 this.isConnected = finalState === 'opened'
                 
-                console.log('Final AMB Connection State:', finalState)
-                console.log('AMB Client connected:', this.isConnected)
+                console.log('ScrumPokerWebSocketService: Final AMB Connection State:', finalState)
+                console.log('ScrumPokerWebSocketService: AMB Client connected:', this.isConnected)
                 
                 if (this.isConnected) {
-                    console.log('✅ AMB Client successfully initialized - Real-time updates available')
+                    console.log('✅ ScrumPokerWebSocketService: AMB Client successfully initialized - Real-time updates available')
                 } else {
-                    console.warn('⚠️ AMB Client connection state changed unexpectedly')
+                    console.warn('⚠️ ScrumPokerWebSocketService: AMB Client connection state changed unexpectedly')
                     console.log('Expected state: "opened", Actual state:', finalState)
+                    throw new Error(`Unexpected connection state: ${finalState}`)
                 }
             } else {
-                console.warn('Failed to get AMB client instance from window.amb.getClient()')
+                throw new Error('Failed to get AMB client instance from window.amb.getClient()')
             }
         } catch (error) {
-            console.error('Failed to initialize AMB Client:', error)
-            this.isConnected = false
+            console.error('ScrumPokerWebSocketService: Failed to initialize AMB Client:', error)
+            throw error
         }
     }
 
@@ -146,8 +175,8 @@ export class ScrumPokerWebSocketService {
         // Ensure AMB is initialized first
         await this.ensureAMBInitialization()
 
-        if (!this.ambClient || !this.isConnected) {
-            console.warn(`AMB Client not available for watching table: ${tableName}`)
+        if (!this.ambAvailable || !this.ambClient || !this.isConnected) {
+            console.warn(`ScrumPokerWebSocketService: AMB Client not available for watching table: ${tableName}`)
             return null
         }
 
@@ -156,39 +185,39 @@ export class ScrumPokerWebSocketService {
             
             if (sysId) {
                 // Watch specific record using sys_id (this works)
-                console.log(`Setting up record watcher for specific record in ${tableName}`)
-                console.log(`Record sys_id: ${sysId}`)
+                console.log(`ScrumPokerWebSocketService: Setting up record watcher for specific record in ${tableName}`)
+                console.log(`ScrumPokerWebSocketService: Record sys_id: ${sysId}`)
                 
                 const encodedQuery = `sys_id=${sysId}`
                 const base64EncodedQuery = btoa(unescape(encodeURIComponent(encodedQuery)))
                 channelId = `/rw/default/${tableName}/${base64EncodedQuery}`
                 
-                console.log(`Encoded query: ${encodedQuery}`)
-                console.log(`Base64 encoded query: ${base64EncodedQuery}`)
+                console.log(`ScrumPokerWebSocketService: Encoded query: ${encodedQuery}`)
+                console.log(`ScrumPokerWebSocketService: Base64 encoded query: ${base64EncodedQuery}`)
             } else {
                 // Watch entire table (no filter)
-                console.log(`Setting up table-level watcher for ${tableName}`)
+                console.log(`ScrumPokerWebSocketService: Setting up table-level watcher for ${tableName}`)
                 channelId = `/rw/${tableName}`
             }
             
-            console.log(`Channel ID: ${channelId}`)
+            console.log(`ScrumPokerWebSocketService: Channel ID: ${channelId}`)
             
             const channel = this.ambClient.getChannel(channelId)
             
             if (!channel) {
-                console.error(`Failed to get channel for ${channelId}`)
+                console.error(`ScrumPokerWebSocketService: Failed to get channel for ${channelId}`)
                 return null
             }
             
-            console.log(`Channel created for: ${channelId}`)
+            console.log(`ScrumPokerWebSocketService: Channel created for: ${channelId}`)
             
             // Add a listener for incoming messages
             const subscription = channel.subscribe((response) => {
-                console.log(`📡 Record change detected on ${tableName}:`, response)
+                console.log(`📡 ScrumPokerWebSocketService: Record change detected on ${tableName}:`, response)
                 
                 // Extract data from response
                 const recordData = response.data
-                console.log(`📝 Record data:`, recordData)
+                console.log(`📝 ScrumPokerWebSocketService: Record data:`, recordData)
                 
                 callback({
                     tableName: tableName,
@@ -203,11 +232,11 @@ export class ScrumPokerWebSocketService {
             this.channels.set(watcherId, channel)
             this.subscriptions.set(watcherId, subscription)
             
-            console.log(`✅ Record watcher established for ${tableName} with ID: ${watcherId}`)
+            console.log(`✅ ScrumPokerWebSocketService: Record watcher established for ${tableName} with ID: ${watcherId}`)
             return watcherId
             
         } catch (error) {
-            console.error(`Error setting up record watcher for ${tableName}:`, error)
+            console.error(`ScrumPokerWebSocketService: Error setting up record watcher for ${tableName}:`, error)
             return null
         }
     }
@@ -217,10 +246,15 @@ export class ScrumPokerWebSocketService {
      * Uses sys_id for session, table-level for participants/votes with callback filtering
      */
     async watchSession(sessionId, callbacks) {
-        console.log(`🎯 Setting up session watchers for session ID: ${sessionId}`)
+        console.log(`🎯 ScrumPokerWebSocketService: Setting up session watchers for session ID: ${sessionId}`)
         
         // Ensure AMB is initialized first
         await this.ensureAMBInitialization()
+        
+        if (!this.ambAvailable) {
+            console.warn(`🎯 ScrumPokerWebSocketService: AMB not available, watchers will not be set up`)
+            return null
+        }
         
         const watchers = {}
 
@@ -229,15 +263,15 @@ export class ScrumPokerWebSocketService {
             'x_250424_sn_scrum8_poker_session',
             sessionId, // Use session sys_id directly
             (change) => {
-                console.log('🎮 Session record change detected:', change)
-                console.log('🎮 Session record data:', change.record)
+                console.log('🎮 ScrumPokerWebSocketService: Session record change detected:', change)
+                console.log('🎮 ScrumPokerWebSocketService: Session record data:', change.record)
                 
                 if (callbacks.onSessionUpdate) {
                     // Make sure we pass the record data in the correct format
-                    console.log('🎮 Calling onSessionUpdate with:', change.record, change.operation)
+                    console.log('🎮 ScrumPokerWebSocketService: Calling onSessionUpdate with:', change.record, change.operation)
                     callbacks.onSessionUpdate(change.record, change.operation)
                 } else {
-                    console.warn('🎮 No onSessionUpdate callback provided!')
+                    console.warn('🎮 ScrumPokerWebSocketService: No onSessionUpdate callback provided!')
                 }
             }
         )
@@ -247,12 +281,12 @@ export class ScrumPokerWebSocketService {
             'x_250424_sn_scrum8_session_participant',
             null, // No sys_id = table level watcher
             (change) => {
-                console.log('👥 Participant record change (all):', change)
+                console.log('👥 ScrumPokerWebSocketService: Participant record change (all):', change)
                 
                 // Filter for this session in the callback
                 const record = change.record
                 if (record && record.session && record.session === sessionId) {
-                    console.log('👥 Participant change for our session:', record)
+                    console.log('👥 ScrumPokerWebSocketService: Participant change for our session:', record)
                     if (callbacks.onParticipantsUpdate) {
                         callbacks.onParticipantsUpdate({
                             operation: change.operation,
@@ -260,7 +294,7 @@ export class ScrumPokerWebSocketService {
                         })
                     }
                 } else {
-                    console.log('👥 Participant change for different session, ignoring')
+                    console.log('👥 ScrumPokerWebSocketService: Participant change for different session, ignoring')
                 }
             }
         )
@@ -270,12 +304,12 @@ export class ScrumPokerWebSocketService {
             'x_250424_sn_scrum8_poker_vote',
             null, // No sys_id = table level watcher
             (change) => {
-                console.log('🗳️ Vote record change (all):', change)
+                console.log('🗳️ ScrumPokerWebSocketService: Vote record change (all):', change)
                 
                 // Filter for this session in the callback
                 const record = change.record
                 if (record && record.session && record.session === sessionId) {
-                    console.log('🗳️ Vote change for our session:', record)
+                    console.log('🗳️ ScrumPokerWebSocketService: Vote change for our session:', record)
                     if (callbacks.onVotesUpdate) {
                         callbacks.onVotesUpdate({
                             operation: change.operation,
@@ -283,12 +317,12 @@ export class ScrumPokerWebSocketService {
                         })
                     }
                 } else {
-                    console.log('🗳️ Vote change for different session, ignoring')
+                    console.log('🗳️ ScrumPokerWebSocketService: Vote change for different session, ignoring')
                 }
             }
         )
 
-        console.log('✅ Session watchers setup complete:', watchers)
+        console.log('✅ ScrumPokerWebSocketService: Session watchers setup complete:', watchers)
         return watchers
     }
 
@@ -300,7 +334,7 @@ export class ScrumPokerWebSocketService {
             Object.entries(watchers).forEach(([key, watcherId]) => {
                 if (watcherId) {
                     this.stopRecordWatcher(watcherId)
-                    console.log(`Stopped watching ${key} with ID: ${watcherId}`)
+                    console.log(`ScrumPokerWebSocketService: Stopped watching ${key} with ID: ${watcherId}`)
                 }
             })
         }
@@ -314,7 +348,7 @@ export class ScrumPokerWebSocketService {
             const subscription = this.subscriptions.get(watcherId)
             if (subscription && typeof subscription.unsubscribe === 'function') {
                 subscription.unsubscribe()
-                console.log(`Unsubscribed from ${watcherId}`)
+                console.log(`ScrumPokerWebSocketService: Unsubscribed from ${watcherId}`)
             }
             this.subscriptions.delete(watcherId)
         }
@@ -325,7 +359,7 @@ export class ScrumPokerWebSocketService {
             this.channels.delete(watcherId)
         }
         
-        console.log(`Record watcher ${watcherId} stopped`)
+        console.log(`ScrumPokerWebSocketService: Record watcher ${watcherId} stopped`)
     }
 
     /**
@@ -338,18 +372,18 @@ export class ScrumPokerWebSocketService {
         let connected = false
         
         try {
-            if (window.amb && window.amb.getClient) {
+            if (this.ambAvailable && window.amb && window.amb.getClient) {
                 connectionState = window.amb.getClient().getServerConnection().getState()
                 connected = connectionState === 'opened'
             }
         } catch (error) {
-            console.error('Error getting connection state:', error)
+            console.error('ScrumPokerWebSocketService: Error getting connection state:', error)
         }
         
         return {
             connected: connected,
             clientAvailable: !!this.ambClient,
-            ambAvailable: !!(typeof window !== 'undefined' && window.amb && window.amb.getClient),
+            ambAvailable: this.ambAvailable,
             connectionState: connectionState
         }
     }
@@ -362,18 +396,18 @@ export class ScrumPokerWebSocketService {
         let connected = false
         
         try {
-            if (window.amb && window.amb.getClient) {
+            if (this.ambAvailable && window.amb && window.amb.getClient) {
                 connectionState = window.amb.getClient().getServerConnection().getState()
                 connected = connectionState === 'opened'
             }
         } catch (error) {
-            console.error('Error getting connection state:', error)
+            console.error('ScrumPokerWebSocketService: Error getting connection state:', error)
         }
         
         return {
-            connected: connected,
+            connected: connected && this.ambAvailable,
             clientAvailable: !!this.ambClient,
-            ambAvailable: !!(typeof window !== 'undefined' && window.amb && window.amb.getClient),
+            ambAvailable: this.ambAvailable,
             connectionState: connectionState
         }
     }
@@ -383,8 +417,8 @@ export class ScrumPokerWebSocketService {
      */
     async makeRestCall(endpoint, method = 'GET', data = null) {
         try {
-            console.log(`Making ${method} request to:`, `${this.baseUrl}${endpoint}`)
-            console.log('Request data:', data)
+            console.log(`ScrumPokerWebSocketService: Making ${method} request to:`, `${this.baseUrl}${endpoint}`)
+            if (data) console.log('ScrumPokerWebSocketService: Request data:', data)
             
             const options = {
                 method: method,
@@ -410,16 +444,17 @@ export class ScrumPokerWebSocketService {
                 } catch (e) {
                     errorText = await response.text()
                 }
-                console.error('HTTP Error:', response.status, errorText)
+                console.error('ScrumPokerWebSocketService: HTTP Error:', response.status, errorText)
                 throw new Error(`HTTP ${response.status}: ${errorText}`)
             }
             
             const responseData = await response.json()
             const actualData = responseData.result || responseData
             
+            console.log(`ScrumPokerWebSocketService: ${method} ${endpoint} response:`, actualData)
             return actualData
         } catch (error) {
-            console.error('REST API Error:', error)
+            console.error('ScrumPokerWebSocketService: REST API Error:', error)
             throw error
         }
     }
@@ -438,23 +473,28 @@ export class ScrumPokerWebSocketService {
     }
 
     async selectStory(sessionId, storyId) {
+        console.log(`ScrumPokerWebSocketService: Selecting story ${storyId} for session ${sessionId}`)
         return this.makeRestCall(`/session/${sessionId}/story/select`, 'POST', {
             story_id: storyId
         })
     }
 
     async getParticipants(sessionId) {
+        console.log(`ScrumPokerWebSocketService: Getting participants for session ${sessionId}`)
         const response = await this.makeRestCall(`/session/${sessionId}/participants`)
+        console.log(`ScrumPokerWebSocketService: Participants response:`, response)
         return response.participants || []
     }
 
     async startVoting(sessionId, storyId) {
+        console.log(`ScrumPokerWebSocketService: Starting voting for story ${storyId} in session ${sessionId}`)
         return this.makeRestCall(`/session/${sessionId}/voting/start`, 'POST', {
             story_id: storyId
         })
     }
 
     async submitVote(sessionId, storyId, voteValue) {
+        console.log(`ScrumPokerWebSocketService: Submitting vote ${voteValue} for story ${storyId} in session ${sessionId}`)
         return this.makeRestCall(`/session/${sessionId}/vote`, 'POST', {
             story_id: storyId,
             vote_value: voteValue
@@ -472,7 +512,10 @@ export class ScrumPokerWebSocketService {
     }
 
     async getSessionStatus(sessionId) {
-        return this.makeRestCall(`/session/${sessionId}/status`)
+        console.log(`ScrumPokerWebSocketService: Getting session status for ${sessionId}`)
+        const result = await this.makeRestCall(`/session/${sessionId}/status`)
+        console.log(`ScrumPokerWebSocketService: Session status result:`, result)
+        return result
     }
 
     async getStories() {
@@ -484,7 +527,7 @@ export class ScrumPokerWebSocketService {
      * Cleanup method to disconnect AMB client and stop all watchers
      */
     disconnect() {
-        console.log('Disconnecting AMB client and cleaning up watchers...')
+        console.log('ScrumPokerWebSocketService: Disconnecting AMB client and cleaning up watchers...')
         
         // Stop all record watchers
         const watcherIds = Array.from(this.subscriptions.keys())
@@ -500,9 +543,9 @@ export class ScrumPokerWebSocketService {
         if (this.ambClient && this.isConnected) {
             try {
                 this.ambClient.disconnect()
-                console.log('AMB Client disconnected')
+                console.log('ScrumPokerWebSocketService: AMB Client disconnected')
             } catch (error) {
-                console.error('Error disconnecting AMB client:', error)
+                console.error('ScrumPokerWebSocketService: Error disconnecting AMB client:', error)
             }
             this.isConnected = false
         }

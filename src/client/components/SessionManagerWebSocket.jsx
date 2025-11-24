@@ -125,7 +125,12 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
 
   // Helper function to update session state from status API
   const updateSessionFromStatus = (statusResult) => {
-    setSessionState(statusResult.state || 'waiting');
+    console.log('SessionManager: Updating from status:', statusResult);
+    
+    // FIXED: Use the user's working solution for state extraction
+    const newState = statusResult.state || 'waiting';
+    const stateValue = newState.value ? newState.value : newState;
+    setSessionState(stateValue);
     setVotingDuration(statusResult.voting_duration || 300);
     
     if (statusResult.current_story && statusResult.story_details) {
@@ -149,25 +154,37 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
 
     if (statusResult.votes) {
       setVotes(statusResult.votes);
-    } else if (statusResult.state !== 'revealing') {
+    } else if (stateValue !== 'revealing') {
       setVotes([]);
     }
   };
 
   // Helper function to update session state from record watcher
   const updateSessionFromRecord = (sessionRecord) => {
-    if (sessionRecord.state) {
-      setSessionState(sessionRecord.state);
+    console.log('SessionManager: Updating from record:', sessionRecord);
+    
+    // Extract the actual record from the AMB response
+    const record = sessionRecord.record || sessionRecord;
+    
+    if (record.state) {
+      // FIXED: Use the user's working solution for state extraction
+      const newState = record.state;
+      const stateValue = newState.value ? newState.value : newState;
+      setSessionState(stateValue);
     }
-    if (sessionRecord.voting_duration) {
-      setVotingDuration(parseInt(sessionRecord.voting_duration) || 300);
+    if (record.voting_duration) {
+      const duration = record.voting_duration.value ? record.voting_duration.value : record.voting_duration;
+      setVotingDuration(parseInt(duration) || 300);
     }
-    if (sessionRecord.voting_started_at) {
-      setVotingStartTime(new Date(sessionRecord.voting_started_at));
+    if (record.voting_started_at) {
+      const startTime = record.voting_started_at.value ? record.voting_started_at.value : record.voting_started_at;
+      if (startTime) {
+        setVotingStartTime(new Date(startTime));
+      }
     }
     // Note: story details and votes still need to be fetched via API
     // as record watcher only gives us the session record
-    if (sessionRecord.current_story !== currentStory?.id) {
+    if (record.current_story !== currentStory?.id) {
       // Story changed - refresh session status to get story details
       service.getSessionStatus(session.id)
         .then(statusResult => {
