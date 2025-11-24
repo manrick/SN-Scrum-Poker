@@ -18,7 +18,7 @@ export default function VotingInterface({
   sessionState, 
   currentStory, 
   votingStartTime, 
-  votingDuration, 
+  votingDuration = 20, // Default to 20 seconds instead of 300
   hasVoted, 
   votes,
   onVoteSubmitted, 

@@ -11,6 +11,7 @@ export default function ScrumMasterApp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [ambInitialized, setAmbInitialized] = useState(false);
 
   const handleSessionCreated = (session) => {
     setCurrentSession(session);
@@ -22,37 +23,80 @@ export default function ScrumMasterApp() {
     setError('');
   };
 
-  // Check connection status - NO DATA POLLING!
+  // Initialize AMB and check connection status after page load
   useEffect(() => {
-    const checkConnection = () => {
-      const status = service.getConnectionStatus();
-      setConnectionStatus(status.connected ? 'connected' : 'offline');
+    let mounted = true;
+    
+    const initializeService = async () => {
+      try {
+        // Ensure AMB is initialized (this waits for page load)
+        await service.ensureAMBInitialization();
+        
+        if (!mounted) return;
+        
+        setAmbInitialized(true);
+        
+        // Check connection status
+        const checkConnection = async () => {
+          if (!mounted) return;
+          
+          try {
+            const status = await service.getConnectionStatus();
+            setConnectionStatus(status.connected ? 'connected' : 'offline');
+          } catch (error) {
+            console.error('Error checking connection status:', error);
+            setConnectionStatus('offline');
+          }
+        };
+        
+        // Check immediately
+        await checkConnection();
+        
+        // Only check connection status periodically (not data)
+        const statusInterval = setInterval(checkConnection, 5000);
+        
+        return () => {
+          clearInterval(statusInterval);
+        };
+        
+      } catch (error) {
+        console.error('Error initializing AMB service:', error);
+        if (mounted) {
+          setConnectionStatus('error');
+          setAmbInitialized(true); // Still allow the app to function
+        }
+      }
     };
-    
-    // Check immediately
-    checkConnection();
-    
-    // Only check connection status periodically (not data)
-    const statusInterval = setInterval(checkConnection, 5000);
+
+    const cleanup = initializeService();
     
     return () => {
-      clearInterval(statusInterval);
+      mounted = false;
+      cleanup.then(cleanupFn => {
+        if (cleanupFn) cleanupFn();
+      });
       service.disconnect();
     };
   }, [service]);
 
   const getConnectionIcon = () => {
+    if (!ambInitialized) return '⏳';
+    
     switch (connectionStatus) {
       case 'connected': return '🔗';
       case 'offline': return '⚠️';
+      case 'error': return '❌';
       default: return '⏳';
     }
   };
 
   const getConnectionText = () => {
+    if (!ambInitialized) return 'Initializing real-time...';
+    
     switch (connectionStatus) {
       case 'connected': return 'Real-time mode active';
       case 'offline': return 'Real-time unavailable';
+      case 'error': return 'Real-time error';
       default: return 'Connecting to real-time...';
     }
   };
@@ -62,7 +106,7 @@ export default function ScrumMasterApp() {
       <header className="app-header">
         <h1>🃏 Scrum Poker Master (WebSocket)</h1>
         <p>Manage your story estimation sessions with real-time updates</p>
-        <div className={`websocket-status ${connectionStatus}`}>
+        <div className={`websocket-status ${ambInitialized ? connectionStatus : 'initializing'}`}>
           <span className="status-icon">{getConnectionIcon()}</span>
           <span className="status-text">{getConnectionText()}</span>
         </div>
@@ -82,6 +126,7 @@ export default function ScrumMasterApp() {
             loading={loading}
             setLoading={setLoading}
             setError={setError}
+            ambInitialized={ambInitialized}
           />
         ) : (
           <SessionManagerWebSocket
@@ -89,6 +134,7 @@ export default function ScrumMasterApp() {
             session={currentSession}
             onBackToStart={handleBackToStart}
             setError={setError}
+            ambInitialized={ambInitialized}
           />
         )}
       </main>

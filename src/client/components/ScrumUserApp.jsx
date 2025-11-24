@@ -11,17 +11,52 @@ export default function ScrumUserApp() {
   const [sessionState, setSessionState] = useState('waiting');
   const [currentStory, setCurrentStory] = useState(null);
   const [votingStartTime, setVotingStartTime] = useState(null);
-  const [votingDuration, setVotingDuration] = useState(300);
+  const [votingDuration, setVotingDuration] = useState(20); // Changed from 300 to 20 seconds
   const [hasVoted, setHasVoted] = useState(false);
   const [votes, setVotes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [sessionWatchers, setSessionWatchers] = useState(null);
+  const [ambInitialized, setAmbInitialized] = useState(false);
+
+  // Initialize AMB service after page load
+  useEffect(() => {
+    let mounted = true;
+    
+    const initializeService = async () => {
+      try {
+        // Ensure AMB is initialized (this waits for page load)
+        await service.ensureAMBInitialization();
+        
+        if (!mounted) return;
+        
+        setAmbInitialized(true);
+        
+        // Check initial connection status
+        const status = await service.getConnectionStatus();
+        setConnectionStatus(status.connected ? 'connected' : 'offline');
+        
+      } catch (error) {
+        console.error('Error initializing AMB service:', error);
+        if (mounted) {
+          setConnectionStatus('error');
+          setAmbInitialized(true); // Still allow the app to function
+        }
+      }
+    };
+
+    initializeService();
+    
+    return () => {
+      mounted = false;
+      service.disconnect();
+    };
+  }, [service]);
 
   // Initialize record watchers when session is joined - NO POLLING!
   useEffect(() => {
-    if (!currentSession) return;
+    if (!currentSession || !ambInitialized) return;
 
     let mounted = true;
 
@@ -37,26 +72,26 @@ export default function ScrumUserApp() {
         }
 
         // Check AMB connection status
-        const status = service.getConnectionStatus();
+        const status = await service.getConnectionStatus();
         setConnectionStatus(status.connected ? 'connected' : 'offline');
 
         if (status.connected) {
           // Set up record watchers - NO MORE POLLING!
-          const watchers = service.watchSession(currentSession.id, {
+          const watchers = await service.watchSession(currentSession.id, {
             onSessionUpdate: (sessionRecord, operation) => {
-              console.log('User app - Session update:', sessionRecord, operation);
+              console.log('🎯 User app - Session update:', sessionRecord, operation);
               if (mounted && sessionRecord) {
                 updateSessionFromRecord(sessionRecord);
               }
             },
             
             onParticipantsUpdate: ({ operation, participant }) => {
-              console.log('User app - Participants update:', operation, participant);
+              console.log('👥 User app - Participants update:', operation, participant);
               // Participants changes don't directly affect user interface
             },
             
             onVotesUpdate: async ({ operation, vote }) => {
-              console.log('User app - Votes update:', operation, vote);
+              console.log('🗳️ User app - Votes update:', operation, vote);
               if (mounted) {
                 // Refresh session status only when vote changes occur
                 try {
@@ -73,14 +108,14 @@ export default function ScrumUserApp() {
 
           setSessionWatchers(watchers);
           setConnectionStatus('connected');
-          console.log('User app - Record watchers established, NO MORE POLLING!');
+          console.log('✅ User app - Record watchers established, NO MORE POLLING!');
         } else {
           setConnectionStatus('offline');
-          console.warn('User app - AMB not available, real-time updates disabled');
+          console.warn('⚠️ User app - AMB not available, real-time updates disabled');
         }
 
       } catch (error) {
-        console.error('User app - Error initializing watchers:', error);
+        console.error('❌ User app - Error initializing watchers:', error);
         if (mounted) {
           setConnectionStatus('error');
           setError('Failed to initialize real-time updates');
@@ -98,26 +133,24 @@ export default function ScrumUserApp() {
         console.log('User app - Cleaned up session watchers');
       }
     };
-  }, [service, currentSession]);
-
-  // Cleanup service on unmount
-  useEffect(() => {
-    return () => {
-      service.disconnect();
-    };
-  }, [service]);
+  }, [service, currentSession, ambInitialized]);
 
   // Helper function to update session state from status API
   const updateSessionFromStatus = (statusResult) => {
+    console.log('📊 User app - Updating from status API:', statusResult);
+    
     const newState = statusResult.state || 'waiting';
+    console.log('📊 Setting session state to:', newState);
     setSessionState(newState);
-    setVotingDuration(statusResult.voting_duration || 300);
+    setVotingDuration(statusResult.voting_duration || 20); // Default to 20 seconds
     
     if (statusResult.current_story && statusResult.story_details) {
       const newStory = {
         id: statusResult.current_story,
         ...statusResult.story_details
       };
+      
+      console.log('📊 Setting current story to:', newStory);
       
       // Reset vote status if it's a new story
       if (!currentStory || currentStory.id !== newStory.id) {
@@ -126,6 +159,7 @@ export default function ScrumUserApp() {
       
       setCurrentStory(newStory);
     } else {
+      console.log('📊 Clearing current story');
       setCurrentStory(null);
       setHasVoted(false);
     }
@@ -146,28 +180,38 @@ export default function ScrumUserApp() {
 
   // Helper function to update session state from record watcher
   const updateSessionFromRecord = (sessionRecord) => {
-    if (sessionRecord.state) {
-      const newState = sessionRecord.state;
+    console.log('🔄 User app - Updating from AMB record:', sessionRecord);
+    
+    // Extract the actual record data from AMB format
+    const record = sessionRecord.record || sessionRecord;
+    console.log('🔄 Extracted record:', record);
+    
+    if (record.state) {
+      const newState = record.state;
+      console.log('🔄 AMB: Setting session state to:', newState);
       setSessionState(newState);
       
       // If state changed to a new story, reset voting status
-      if (newState === 'active' && sessionRecord.current_story !== currentStory?.id) {
+      if (newState === 'active' && record.current_story !== currentStory?.id) {
+        console.log('🔄 AMB: New story detected, resetting vote status');
         setHasVoted(false);
       }
     }
     
-    if (sessionRecord.voting_duration) {
-      setVotingDuration(parseInt(sessionRecord.voting_duration) || 300);
+    if (record.voting_duration) {
+      setVotingDuration(parseInt(record.voting_duration) || 20); // Default to 20 seconds
     }
     
-    if (sessionRecord.voting_started_at) {
-      setVotingStartTime(new Date(sessionRecord.voting_started_at));
+    if (record.voting_started_at) {
+      setVotingStartTime(new Date(record.voting_started_at));
     }
     
     // If story changed, need to fetch story details via API once
-    if (sessionRecord.current_story !== currentStory?.id) {
+    if (record.current_story && record.current_story !== currentStory?.id) {
+      console.log('🔄 AMB: Story changed, fetching details for:', record.current_story);
       service.getSessionStatus(currentSession.id)
         .then(statusResult => {
+          console.log('📊 Got story details:', statusResult);
           if (statusResult && !statusResult.error) {
             updateSessionFromStatus(statusResult);
           }
@@ -177,6 +221,7 @@ export default function ScrumUserApp() {
   };
 
   const handleSessionJoined = (session) => {
+    console.log('✅ User joined session:', session);
     setCurrentSession(session);
     setError('');
     setHasVoted(false);
@@ -204,6 +249,8 @@ export default function ScrumUserApp() {
   };
 
   const getConnectionIcon = () => {
+    if (!ambInitialized) return '⏳';
+    
     switch (connectionStatus) {
       case 'connected': return '🔗';
       case 'offline': return '⚠️';
@@ -213,6 +260,8 @@ export default function ScrumUserApp() {
   };
 
   const getConnectionText = () => {
+    if (!ambInitialized) return 'Initializing...';
+    
     switch (connectionStatus) {
       case 'connected': return 'Live';
       case 'offline': return 'Offline';
@@ -228,7 +277,7 @@ export default function ScrumUserApp() {
         {currentSession && (
           <div className="session-info">
             <span className="session-name">{currentSession.name}</span>
-            <div className={`connection-status ${connectionStatus}`}>
+            <div className={`connection-status ${ambInitialized ? connectionStatus : 'initializing'}`}>
               <span className="connection-icon">{getConnectionIcon()}</span>
               <span className="connection-text">{getConnectionText()}</span>
             </div>

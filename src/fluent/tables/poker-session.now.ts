@@ -29,10 +29,11 @@ export const x_250424_sn_scrum8_poker_session = Table({
       label: 'Session State',
       choices: {
         waiting: { label: 'Waiting for participants', sequence: 0 },
-        active: { label: 'Active story voting', sequence: 1 },
-        revealing: { label: 'Revealing votes', sequence: 2 },
-        completed: { label: 'Completed', sequence: 3 },
-        paused: { label: 'Paused', sequence: 4 }
+        story_selected: { label: 'Story Selected', sequence: 1 },
+        active: { label: 'Active story voting', sequence: 2 },
+        revealing: { label: 'Revealing votes', sequence: 3 },
+        completed: { label: 'Completed', sequence: 4 },
+        paused: { label: 'Paused', sequence: 5 }
       },
       default: 'waiting'
     }),
@@ -41,7 +42,7 @@ export const x_250424_sn_scrum8_poker_session = Table({
     }),
     voting_duration: IntegerColumn({
       label: 'Voting Duration (seconds)',
-      default: '10'
+      default: '20'
     }),
     is_active: BooleanColumn({
       label: 'Is Active',

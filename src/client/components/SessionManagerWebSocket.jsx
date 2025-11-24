@@ -4,7 +4,7 @@ import VotingManager from './VotingManager.jsx';
 import ParticipantsList from './ParticipantsList.jsx';
 import './SessionManager.css';
 
-export default function SessionManagerWebSocket({ service, session, onBackToStart, setError }) {
+export default function SessionManagerWebSocket({ service, session, onBackToStart, setError, ambInitialized }) {
   const [sessionState, setSessionState] = useState('waiting');
   const [currentStory, setCurrentStory] = useState(null);
   const [participants, setParticipants] = useState([]);
@@ -17,12 +17,19 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
 
   const isScrumMaster = session.isMaster !== false;
 
-  // Initialize record watchers - NO setInterval!
+  // Initialize record watchers - Wait for AMB to be initialized first
   useEffect(() => {
+    if (!ambInitialized) {
+      console.log('SessionManager: Waiting for AMB initialization...');
+      return;
+    }
+
     let mounted = true;
 
     const initializeWatchers = async () => {
       try {
+        console.log('SessionManager: AMB initialized, setting up watchers...');
+
         // Get initial session status
         const [statusResult, participantsResult] = await Promise.all([
           service.getSessionStatus(session.id),
@@ -40,21 +47,21 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
         }
 
         // Check AMB connection status
-        const status = service.getConnectionStatus();
+        const status = service.getConnectionStatusSync();
         setConnectionStatus(status.connected ? 'connected' : 'offline');
 
         if (status.connected) {
           // Set up record watchers
-          const watchers = service.watchSession(session.id, {
+          const watchers = await service.watchSession(session.id, {
             onSessionUpdate: (sessionRecord, operation) => {
-              console.log('Session update received:', sessionRecord, operation);
+              console.log('SessionManager: Session update received:', sessionRecord, operation);
               if (mounted && sessionRecord) {
                 updateSessionFromRecord(sessionRecord);
               }
             },
             
             onParticipantsUpdate: async ({ operation, participant }) => {
-              console.log('Participants update received:', operation, participant);
+              console.log('SessionManager: Participants update received:', operation, participant);
               if (mounted) {
                 // Refresh participants list when changes occur
                 try {
@@ -69,7 +76,7 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
             },
             
             onVotesUpdate: async ({ operation, vote }) => {
-              console.log('Votes update received:', operation, vote);
+              console.log('SessionManager: Votes update received:', operation, vote);
               if (mounted) {
                 // Update vote count and potentially refresh session status
                 try {
@@ -89,14 +96,14 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
 
           setSessionWatchers(watchers);
           setConnectionStatus('connected');
-          console.log('Record watchers established for session:', session.id);
+          console.log('SessionManager: Record watchers established for session:', session.id);
         } else {
           setConnectionStatus('offline');
-          console.warn('AMB not available - real-time updates disabled');
+          console.warn('SessionManager: AMB not available - real-time updates disabled');
         }
 
       } catch (error) {
-        console.error('Error initializing watchers:', error);
+        console.error('SessionManager: Error initializing watchers:', error);
         if (mounted) {
           setConnectionStatus('error');
           setError('Failed to initialize real-time updates');
@@ -111,10 +118,10 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
       mounted = false;
       if (sessionWatchers) {
         service.unwatchSession(sessionWatchers);
-        console.log('Cleaned up session watchers');
+        console.log('SessionManager: Cleaned up session watchers');
       }
     };
-  }, [service, session.id, setError]);
+  }, [service, session.id, setError, ambInitialized]);
 
   // Helper function to update session state from status API
   const updateSessionFromStatus = (statusResult) => {
@@ -172,21 +179,41 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
     }
   };
 
+  // FIXED: Now calls the API to update the database
   const handleStorySelected = async (story) => {
     if (!isScrumMaster) {
       setError('Only the scrum master can select stories');
       return;
     }
 
-    setCurrentStory({
-      id: story.sys_id,
-      number: story.number,
-      short_description: story.short_description,
-      description: story.description
-    });
-    setSessionState('story_selected');
-    setVotes([]);
-    setVoteCount(0);
+    try {
+      console.log('SessionManager: Selecting story via API:', story.sys_id);
+      
+      // Call the new selectStory API to update the database
+      const result = await service.selectStory(session.id, story.sys_id);
+      
+      if (result.success) {
+        console.log('SessionManager: Story selected successfully:', result.story);
+        
+        // Update local state (this will also be updated via AMB watcher)
+        setCurrentStory({
+          id: story.sys_id,
+          number: story.number,
+          short_description: story.short_description,
+          description: story.description
+        });
+        setSessionState('story_selected');
+        setVotes([]);
+        setVoteCount(0);
+        
+        console.log('SessionManager: Local state updated, AMB should trigger updates for other users');
+      } else {
+        setError(result.error || 'Failed to select story');
+      }
+    } catch (error) {
+      console.error('SessionManager: Error selecting story:', error);
+      setError('Failed to select story. Please try again.');
+    }
   };
 
   const handleStartVoting = async () => {
@@ -259,7 +286,36 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
     setVotingStartTime(null);
   };
 
+  // NEW: Handle restarting voting (clears votes and starts new timer)
+  const handleRestartVoting = async () => {
+    if (!isScrumMaster || !currentStory) {
+      setError('Only the scrum master can restart voting');
+      return;
+    }
+
+    try {
+      console.log('SessionManager: Restarting voting for story:', currentStory.id);
+      
+      // Start voting again (this clears existing votes and restarts timer)
+      const result = await service.startVoting(session.id, currentStory.id);
+      if (result.success) {
+        setVotes([]);
+        setVoteCount(0);
+        setVotingStartTime(new Date());
+        setSessionState('active');
+        console.log('SessionManager: Voting restarted successfully');
+      } else {
+        setError(result.error || 'Failed to restart voting');
+      }
+    } catch (error) {
+      console.error('SessionManager: Error restarting voting:', error);
+      setError('Failed to restart voting. Please try again.');
+    }
+  };
+
   const getConnectionIcon = () => {
+    if (!ambInitialized) return '⏳';
+    
     switch (connectionStatus) {
       case 'connected': return '🔗';
       case 'offline': return '⚠️';
@@ -269,6 +325,8 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
   };
 
   const getConnectionText = () => {
+    if (!ambInitialized) return 'Initializing...';
+    
     switch (connectionStatus) {
       case 'connected': return 'Live';
       case 'offline': return 'Offline';
@@ -286,7 +344,7 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
             Code: <span className="code-highlight">{session.code}</span>
             {isScrumMaster && <span className="master-badge">Scrum Master</span>}
           </div>
-          <div className={`connection-status ${connectionStatus}`}>
+          <div className={`connection-status ${ambInitialized && connectionStatus === 'connected' ? 'connected' : 'initializing'}`}>
             <span className="connection-icon">{getConnectionIcon()}</span>
             <span className="connection-text">{getConnectionText()}</span>
           </div>
@@ -369,6 +427,8 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
               votes={votes}
               onRevealVotes={handleRevealVotes}
               onFinalizePoints={handleFinalizePoints}
+              onSelectDifferentStory={handleSelectDifferentStory}
+              onRestartVoting={handleRestartVoting}
               isScrumMaster={isScrumMaster}
             />
           )}

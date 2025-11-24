@@ -50,6 +50,16 @@ export const ScrumPokerRestApi = RestApi({
             authentication: false,
         },
         {
+            $id: Now.ID['select_story_route'],
+            name: 'Select Story',
+            method: 'POST',
+            path: '/session/{session_id}/story/select',
+            script: Now.include('../../server/scripted-rest-apis/select-story.js'),
+            short_description: 'Select a story for estimation (before starting voting)',
+            authorization: false,
+            authentication: false,
+        },
+        {
             $id: Now.ID['start_voting_route'],
             name: 'Start Voting',
             method: 'POST',
