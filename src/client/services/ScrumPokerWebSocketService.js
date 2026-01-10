@@ -168,10 +168,32 @@ export class ScrumPokerWebSocketService {
     }
 
     /**
-     * Set up record watcher for a specific record (sys_id only) or entire table
-     * Only sys_id based filters work with AMB!
+     * NEW: Create Base64 encoded query string with trailing '=' characters removed
+     * This is needed for AMB filtering as '=' characters are not allowed in channel IDs
      */
-    async setupRecordWatcher(tableName, sysId, callback) {
+    createAMBEncodedQuery(query) {
+        try {
+            // Encode to Base64
+            const base64Encoded = btoa(unescape(encodeURIComponent(query)))
+            // Remove trailing '=' characters that cause issues with AMB
+            const cleanedEncoded = base64Encoded.replace(/=+$/, '')
+            
+            console.log(`ScrumPokerWebSocketService: Original query: ${query}`)
+            console.log(`ScrumPokerWebSocketService: Base64 encoded: ${base64Encoded}`)
+            console.log(`ScrumPokerWebSocketService: Cleaned encoded (removed =): ${cleanedEncoded}`)
+            
+            return cleanedEncoded
+        } catch (error) {
+            console.error('ScrumPokerWebSocketService: Error encoding query:', error)
+            return null
+        }
+    }
+
+    /**
+     * UPDATED: Set up record watcher for filtered records or entire table
+     * Now supports session-based filtering with proper Base64 encoding
+     */
+    async setupRecordWatcher(tableName, filterQuery, callback) {
         // Ensure AMB is initialized first
         await this.ensureAMBInitialization()
 
@@ -183,17 +205,17 @@ export class ScrumPokerWebSocketService {
         try {
             let channelId
             
-            if (sysId) {
-                // Watch specific record using sys_id (this works)
-                console.log(`ScrumPokerWebSocketService: Setting up record watcher for specific record in ${tableName}`)
-                console.log(`ScrumPokerWebSocketService: Record sys_id: ${sysId}`)
+            if (filterQuery) {
+                // Watch with filter query (session-based or sys_id-based)
+                console.log(`ScrumPokerWebSocketService: Setting up filtered record watcher for ${tableName}`)
+                console.log(`ScrumPokerWebSocketService: Filter query: ${filterQuery}`)
                 
-                const encodedQuery = `sys_id=${sysId}`
-                const base64EncodedQuery = btoa(unescape(encodeURIComponent(encodedQuery)))
-                channelId = `/rw/default/${tableName}/${base64EncodedQuery}`
+                const encodedQuery = this.createAMBEncodedQuery(filterQuery)
+                if (!encodedQuery) {
+                    throw new Error('Failed to encode query for AMB')
+                }
                 
-                console.log(`ScrumPokerWebSocketService: Encoded query: ${encodedQuery}`)
-                console.log(`ScrumPokerWebSocketService: Base64 encoded query: ${base64EncodedQuery}`)
+                channelId = `/rw/default/${tableName}/${encodedQuery}`
             } else {
                 // Watch entire table (no filter)
                 console.log(`ScrumPokerWebSocketService: Setting up table-level watcher for ${tableName}`)
@@ -228,7 +250,7 @@ export class ScrumPokerWebSocketService {
             })
             
             // Store channel and subscription for cleanup
-            const watcherId = `${tableName}_${sysId || 'table'}_${Date.now()}`
+            const watcherId = `${tableName}_${filterQuery || 'table'}_${Date.now()}`
             this.channels.set(watcherId, channel)
             this.subscriptions.set(watcherId, subscription)
             
@@ -242,8 +264,31 @@ export class ScrumPokerWebSocketService {
     }
 
     /**
-     * Watch session-related tables for changes
-     * Uses sys_id for session, table-level for participants/votes with callback filtering
+     * Count participants for a specific session by calling the API
+     * This method checks the session reference and counts all records in participant table
+     */
+    async countParticipantsForSession(sessionId) {
+        try {
+            console.log(`👥 ScrumPokerWebSocketService: Counting participants for session: ${sessionId}`)
+            const participants = await this.getParticipants(sessionId)
+            const count = participants ? participants.length : 0
+            console.log(`👥 ScrumPokerWebSocketService: Found ${count} participants for session ${sessionId}`)
+            return {
+                count: count,
+                participants: participants
+            }
+        } catch (error) {
+            console.error(`ScrumPokerWebSocketService: Error counting participants for session ${sessionId}:`, error)
+            return {
+                count: 0,
+                participants: []
+            }
+        }
+    }
+
+    /**
+     * FIXED: Watch session-related tables for changes
+     * Now uses session-based filtering for participants with proper Base64 encoding
      */
     async watchSession(sessionId, callbacks) {
         console.log(`🎯 ScrumPokerWebSocketService: Setting up session watchers for session ID: ${sessionId}`)
@@ -258,16 +303,15 @@ export class ScrumPokerWebSocketService {
         
         const watchers = {}
 
-        // 1. Watch specific session record using sys_id (this works!)
+        // 1. Watch specific session record using sys_id filter
         watchers.session = await this.setupRecordWatcher(
             'x_250424_sn_scrum8_poker_session',
-            sessionId, // Use session sys_id directly
+            `sys_id=${sessionId}`, // sys_id filter for session
             (change) => {
                 console.log('🎮 ScrumPokerWebSocketService: Session record change detected:', change)
                 console.log('🎮 ScrumPokerWebSocketService: Session record data:', change.record)
                 
                 if (callbacks.onSessionUpdate) {
-                    // Make sure we pass the record data in the correct format
                     console.log('🎮 ScrumPokerWebSocketService: Calling onSessionUpdate with:', change.record, change.operation)
                     callbacks.onSessionUpdate(change.record, change.operation)
                 } else {
@@ -276,48 +320,56 @@ export class ScrumPokerWebSocketService {
             }
         )
 
-        // 2. Watch ALL participants (table level) and filter in callback
+        // 2. FIXED: Watch participants with session-based filter (instead of table-level)
         watchers.participants = await this.setupRecordWatcher(
             'x_250424_sn_scrum8_session_participant',
-            null, // No sys_id = table level watcher
-            (change) => {
-                console.log('👥 ScrumPokerWebSocketService: Participant record change (all):', change)
+            `session=${sessionId}`, // Filter by session field, not sys_id
+            async (change) => {
+                console.log('👥 ScrumPokerWebSocketService: Participant record change for our session:', change)
                 
-                // Filter for this session in the callback
                 const record = change.record
-                if (record && record.session && record.session === sessionId) {
-                    console.log('👥 ScrumPokerWebSocketService: Participant change for our session:', record)
-                    if (callbacks.onParticipantsUpdate) {
+                if (record && callbacks.onParticipantsUpdate) {
+                    console.log('👥 ScrumPokerWebSocketService: Participant change affects our session, triggering callback')
+                    
+                    // Count all records in participant table where session reference matches
+                    try {
+                        const sessionParticipants = await this.countParticipantsForSession(sessionId)
+                        console.log(`👥 ScrumPokerWebSocketService: Total participants for session ${sessionId}: ${sessionParticipants.count}`)
+                        
                         callbacks.onParticipantsUpdate({
                             operation: change.operation,
-                            participant: record
+                            participant: record,
+                            sessionId: sessionId,
+                            totalParticipants: sessionParticipants.count,
+                            allParticipants: sessionParticipants.participants
+                        })
+                    } catch (error) {
+                        console.error('👥 ScrumPokerWebSocketService: Error counting participants:', error)
+                        // Still trigger callback with basic info
+                        callbacks.onParticipantsUpdate({
+                            operation: change.operation,
+                            participant: record,
+                            sessionId: sessionId
                         })
                     }
-                } else {
-                    console.log('👥 ScrumPokerWebSocketService: Participant change for different session, ignoring')
                 }
             }
         )
 
-        // 3. Watch ALL votes (table level) and filter in callback
+        // 3. Watch votes with session-based filter (instead of table-level)
         watchers.votes = await this.setupRecordWatcher(
             'x_250424_sn_scrum8_poker_vote',
-            null, // No sys_id = table level watcher
+            `session=${sessionId}`, // Filter by session field
             (change) => {
-                console.log('🗳️ ScrumPokerWebSocketService: Vote record change (all):', change)
+                console.log('🗳️ ScrumPokerWebSocketService: Vote record change for our session:', change)
                 
-                // Filter for this session in the callback
                 const record = change.record
-                if (record && record.session && record.session === sessionId) {
+                if (record && callbacks.onVotesUpdate) {
                     console.log('🗳️ ScrumPokerWebSocketService: Vote change for our session:', record)
-                    if (callbacks.onVotesUpdate) {
-                        callbacks.onVotesUpdate({
-                            operation: change.operation,
-                            vote: record
-                        })
-                    }
-                } else {
-                    console.log('🗳️ ScrumPokerWebSocketService: Vote change for different session, ignoring')
+                    callbacks.onVotesUpdate({
+                        operation: change.operation,
+                        vote: record
+                    })
                 }
             }
         )

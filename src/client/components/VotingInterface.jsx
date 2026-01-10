@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import VotingTimer from './VotingTimer.jsx';
 import './VotingInterface.css';
 
 const FIBONACCI_CARDS = [
@@ -18,18 +19,26 @@ export default function VotingInterface({
   sessionState, 
   currentStory, 
   votingStartTime, 
-  votingDuration = 20, // Default to 20 seconds instead of 300
+  votingDuration = 20,
   hasVoted, 
+  userVoteValue,
   votes,
   onVoteSubmitted, 
   setError 
 }) {
   const [selectedVote, setSelectedVote] = useState('');
-  const [timeRemaining, setTimeRemaining] = useState(votingDuration);
   const [submittingVote, setSubmittingVote] = useState(false);
+  const [timeExpired, setTimeExpired] = useState(false);
 
-  // Clean logging for key state changes only
-  console.log('VotingInterface:', { sessionState, storyId: currentStory?.id, hasVoted });
+  console.log('VotingInterface:', { 
+    sessionState, 
+    storyId: currentStory?.id, 
+    hasVoted,
+    userVoteValue,
+    selectedVote,
+    submittingVote,
+    timeExpired
+  });
 
   // Helper function to safely extract values from story object
   const getSafeValue = (field) => {
@@ -51,44 +60,51 @@ export default function VotingInterface({
     description: getSafeValue(currentStory.description)
   } : null;
 
-  // Timer countdown
+  // Reset timer and vote states when new story starts or voting restarts
   useEffect(() => {
     if (sessionState === 'active' && votingStartTime) {
-      const interval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - votingStartTime.getTime()) / 1000);
-        const remaining = Math.max(0, votingDuration - elapsed);
-        setTimeRemaining(remaining);
-      }, 100);
-
-      return () => clearInterval(interval);
+      console.log('VotingInterface: Active voting started, resetting timer state');
+      setTimeExpired(false);
     }
-  }, [sessionState, votingStartTime, votingDuration]);
+  }, [sessionState, votingStartTime]);
 
-  // Reset selected vote when new story starts
+  // Reset selected vote when new story starts or when hasVoted changes
   useEffect(() => {
     if (sessionState === 'active' && !hasVoted) {
+      console.log('VotingInterface: Resetting selected vote - new story or vote state reset');
       setSelectedVote('');
+    } else if (hasVoted && userVoteValue) {
+      console.log('VotingInterface: User has voted, setting selected vote to:', userVoteValue);
+      setSelectedVote(userVoteValue);
     }
-  }, [sessionState, currentStory, hasVoted]);
+  }, [sessionState, currentStory, hasVoted, userVoteValue]);
 
   const handleCardClick = async (cardValue) => {
-    console.log('Vote submitted:', cardValue);
+    console.log('VotingInterface: Vote button clicked:', cardValue);
+    
     // Check if voting is still allowed
-    const votingTimeUp = timeRemaining <= 0;
-    if (sessionState !== 'active' || hasVoted || submittingVote || !safeCurrentStory || votingTimeUp) return;
+    if (sessionState !== 'active' || hasVoted || submittingVote || !safeCurrentStory || timeExpired) {
+      console.log('VotingInterface: Vote rejected - invalid state');
+      return;
+    }
 
     setSelectedVote(cardValue);
     setSubmittingVote(true);
 
     try {
+      console.log('VotingInterface: Submitting vote to server');
       const result = await service.submitVote(session.id, safeCurrentStory.id, cardValue);
+      
       if (result.success) {
-        onVoteSubmitted();
+        console.log('VotingInterface: Vote submitted successfully to server');
+        onVoteSubmitted(cardValue);
       } else {
+        console.log('VotingInterface: Vote submission failed:', result.error);
         setError(result.error || 'Failed to submit vote');
         setSelectedVote('');
       }
     } catch (error) {
+      console.log('VotingInterface: Vote submission error:', error);
       setError('Failed to submit vote. Please try again.');
       setSelectedVote('');
     } finally {
@@ -96,9 +112,9 @@ export default function VotingInterface({
     }
   };
 
-  const getProgressPercentage = () => {
-    if (votingDuration === 0) return 100;
-    return ((votingDuration - timeRemaining) / votingDuration) * 100;
+  const handleTimeExpired = () => {
+    console.log('VotingInterface: Timer expired');
+    setTimeExpired(true);
   };
 
   const renderWaitingState = () => (
@@ -132,18 +148,16 @@ export default function VotingInterface({
       );
     }
 
-    const votingTimeUp = timeRemaining <= 0;
-
     return (
       <div className="voting-state">
         <div className="story-info">
           <div className="story-header">
             <span className="story-number">{safeCurrentStory.number}</span>
-            <div className="timer-info">
-              <span className={`timer-text ${votingTimeUp ? 'time-up' : ''}`}>
-                {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
-              </span>
-            </div>
+            <VotingTimer
+              votingStartTime={votingStartTime}
+              votingDuration={votingDuration}
+              onTimeExpired={handleTimeExpired}
+            />
           </div>
           <h3 className="story-title">{safeCurrentStory.short_description}</h3>
           {safeCurrentStory.description && (
@@ -151,14 +165,7 @@ export default function VotingInterface({
           )}
         </div>
 
-        <div className="timer-bar">
-          <div 
-            className={`timer-progress ${votingTimeUp ? 'expired' : ''}`}
-            style={{ width: `${getProgressPercentage()}%` }}
-          />
-        </div>
-
-        {votingTimeUp && !hasVoted ? (
+        {timeExpired && !hasVoted ? (
           <div className="time-up-state">
             <div className="time-up-icon">⏰</div>
             <h3>Time's Up!</h3>

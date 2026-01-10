@@ -12,6 +12,7 @@ export default function ScrumUserAppWebSocket() {
   const [votingStartTime, setVotingStartTime] = useState(null);
   const [votingDuration, setVotingDuration] = useState(300);
   const [hasVoted, setHasVoted] = useState(false);
+  const [userVoteValue, setUserVoteValue] = useState(''); // Track what the user voted
   const [votes, setVotes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,7 +25,8 @@ export default function ScrumUserAppWebSocket() {
     sessionState,
     ambInitialized,
     currentStory: currentStory ? currentStory.number : 'none',
-    hasVoted
+    hasVoted,
+    userVoteValue
   });
 
   // Initialize AMB and track initialization status
@@ -198,10 +200,14 @@ export default function ScrumUserAppWebSocket() {
       };
       console.log('ScrumUserApp: Setting current story:', newStory);
       
-      // Reset vote status if it's a new story
+      // TARGETED FIX: Only reset vote status if it's actually a different story
       if (!currentStory || currentStory.id !== newStory.id) {
         console.log('ScrumUserApp: New story, resetting vote status');
         setHasVoted(false);
+        setUserVoteValue('');
+      } else {
+        console.log('ScrumUserApp: Same story, preserving vote status. hasVoted:', hasVoted);
+        // Same story - don't reset hasVoted if user has already voted
       }
       
       setCurrentStory(newStory);
@@ -209,6 +215,7 @@ export default function ScrumUserAppWebSocket() {
       console.log('ScrumUserApp: Clearing current story');
       setCurrentStory(null);
       setHasVoted(false);
+      setUserVoteValue('');
     }
 
     if (statusResult.voting_started_at && newState === 'active') {
@@ -241,10 +248,11 @@ export default function ScrumUserAppWebSocket() {
       console.log('ScrumUserApp: AMB state change to:', stateValue);
       setSessionState(stateValue);
       
-      // If state changed to a new story, reset voting status
+      // If state changed to a new story, only reset if it's actually different
       if (stateValue === 'active' && record.current_story !== currentStory?.id) {
         console.log('ScrumUserApp: New active story, resetting vote status');
         setHasVoted(false);
+        setUserVoteValue('');
       }
     }
     
@@ -279,11 +287,13 @@ export default function ScrumUserAppWebSocket() {
     setCurrentSession(session);
     setError('');
     setHasVoted(false);
+    setUserVoteValue('');
   };
 
-  const handleVoteSubmitted = () => {
-    console.log('ScrumUserApp: Vote submitted, setting hasVoted to true');
+  const handleVoteSubmitted = (voteValue) => {
+    console.log('ScrumUserApp: Vote submitted, setting hasVoted to true with value:', voteValue);
     setHasVoted(true);
+    setUserVoteValue(voteValue);
   };
 
   const handleLeaveSession = () => {
@@ -298,6 +308,7 @@ export default function ScrumUserAppWebSocket() {
     setCurrentStory(null);
     setVotingStartTime(null);
     setHasVoted(false);
+    setUserVoteValue('');
     setVotes([]);
     setError('');
     setConnectionStatus('connecting');
@@ -366,6 +377,7 @@ export default function ScrumUserAppWebSocket() {
             votingStartTime={votingStartTime}
             votingDuration={votingDuration}
             hasVoted={hasVoted}
+            userVoteValue={userVoteValue}
             votes={votes}
             onVoteSubmitted={handleVoteSubmitted}
             setError={setError}
