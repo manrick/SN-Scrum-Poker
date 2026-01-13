@@ -38,7 +38,7 @@ export default function SessionJoiner({ service, onSessionJoined, loading, setLo
   return (
     <div className="session-joiner">
       <div className="joiner-card">
-        <div className="poker-icon">🃏</div>
+        <div className="poker-icon"><img className="king-card" src="x_250424_sn_scrum8.card_king.svg"></img></div>
         <h2>Join Poker Session</h2>
         <p>Enter the session code provided by your Scrum Master</p>
         

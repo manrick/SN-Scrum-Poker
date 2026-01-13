@@ -18,7 +18,7 @@ export default function VotingInterface({
   session, 
   sessionState, 
   currentStory, 
-  votingStartTime, 
+  votingStartTime,
   votingDuration = 20,
   hasVoted, 
   userVoteValue,
@@ -28,15 +28,19 @@ export default function VotingInterface({
 }) {
   const [selectedVote, setSelectedVote] = useState('');
   const [submittingVote, setSubmittingVote] = useState(false);
+  const [previousStoryId, setPreviousStoryId] = useState(null);
   const [timeExpired, setTimeExpired] = useState(false);
 
-  console.log('VotingInterface:', { 
+  console.log('VotingInterface render:', { 
     sessionState, 
     storyId: currentStory?.id, 
     hasVoted,
     userVoteValue,
     selectedVote,
     submittingVote,
+    previousStoryId,
+    votingStartTime,
+    votingDuration,
     timeExpired
   });
 
@@ -60,7 +64,7 @@ export default function VotingInterface({
     description: getSafeValue(currentStory.description)
   } : null;
 
-  // Reset timer and vote states when new story starts or voting restarts
+  // Reset timer state when new voting starts
   useEffect(() => {
     if (sessionState === 'active' && votingStartTime) {
       console.log('VotingInterface: Active voting started, resetting timer state');
@@ -68,16 +72,49 @@ export default function VotingInterface({
     }
   }, [sessionState, votingStartTime]);
 
-  // Reset selected vote when new story starts or when hasVoted changes
+  // Logic for managing selected vote based on story and voting state
   useEffect(() => {
-    if (sessionState === 'active' && !hasVoted) {
-      console.log('VotingInterface: Resetting selected vote - new story or vote state reset');
+    const currentStoryId = safeCurrentStory?.id;
+    
+    // Case 1: New story detected - reset everything
+    if (currentStoryId && currentStoryId !== previousStoryId) {
+      console.log('VotingInterface: New story detected, resetting vote states');
+      console.log('VotingInterface: Previous story ID:', previousStoryId, 'Current story ID:', currentStoryId);
       setSelectedVote('');
-    } else if (hasVoted && userVoteValue) {
+      setTimeExpired(false);
+      setPreviousStoryId(currentStoryId);
+      return;
+    }
+    
+    // Case 2: Session is revealing - preserve user vote display for results
+    if (sessionState === 'revealing' && hasVoted && userVoteValue && currentStoryId === previousStoryId) {
+      console.log('VotingInterface: Revealing votes - showing user vote:', userVoteValue);
+      setSelectedVote(userVoteValue);
+      return;
+    }
+    
+    // Case 3: Same story, but user hasn't voted and session is active - don't reset!
+    if (sessionState === 'active' && !hasVoted && currentStoryId === previousStoryId) {
+      console.log('VotingInterface: Same story, user not voted yet - preserving selected vote');
+      return;
+    }
+    
+    // Case 4: User has voted - show their vote
+    if (hasVoted && userVoteValue && currentStoryId === previousStoryId) {
       console.log('VotingInterface: User has voted, setting selected vote to:', userVoteValue);
       setSelectedVote(userVoteValue);
+      return;
     }
-  }, [sessionState, currentStory, hasVoted, userVoteValue]);
+    
+    // Case 5: No story or session not active/revealing - clear selection
+    if (!currentStoryId || (sessionState !== 'active' && sessionState !== 'revealing')) {
+      console.log('VotingInterface: No story or not active/revealing, clearing selected vote');
+      setSelectedVote('');
+      setPreviousStoryId(currentStoryId);
+      return;
+    }
+    
+  }, [sessionState, safeCurrentStory?.id, hasVoted, userVoteValue, previousStoryId]);
 
   const handleCardClick = async (cardValue) => {
     console.log('VotingInterface: Vote button clicked:', cardValue);
@@ -153,11 +190,13 @@ export default function VotingInterface({
         <div className="story-info">
           <div className="story-header">
             <span className="story-number">{safeCurrentStory.number}</span>
-            <VotingTimer
-              votingStartTime={votingStartTime}
-              votingDuration={votingDuration}
-              onTimeExpired={handleTimeExpired}
-            />
+            {votingStartTime && (
+              <VotingTimer
+                votingStartTime={votingStartTime}
+                votingDuration={votingDuration}
+                onTimeExpired={handleTimeExpired}
+              />
+            )}
           </div>
           <h3 className="story-title">{safeCurrentStory.short_description}</h3>
           {safeCurrentStory.description && (
@@ -190,7 +229,7 @@ export default function VotingInterface({
                   key={card.value}
                   className={`poker-card ${selectedVote === card.value ? 'selected' : ''} ${submittingVote ? 'disabled' : ''}`}
                   onClick={() => handleCardClick(card.value)}
-                  disabled={submittingVote}
+                  disabled={submittingVote || timeExpired}
                 >
                   <span className="card-value">{card.label}</span>
                 </button>
@@ -222,16 +261,33 @@ export default function VotingInterface({
           <h4>🎯 Vote Results</h4>
         </div>
 
-        <div className="votes-grid">
-          {votes && votes.length > 0 ? votes.map((vote, index) => (
-            <div key={index} className="vote-result">
-              <div className="voter-name">{vote.voter || 'Unknown'}</div>
-              <div className={`result-card ${vote.vote || ''}`}>
-                {vote.vote === 'unknown' ? '?' : (vote.vote || 'N/A')}
-              </div>
+        {hasVoted && userVoteValue && (
+          <div className="user-vote-display">
+            <h5>Your Vote:</h5>
+            <div className={`user-vote-card ${userVoteValue}`}>
+              {userVoteValue === 'unknown' ? '?' : userVoteValue}
             </div>
-          )) : (
-            <p>No votes to display</p>
+          </div>
+        )}
+
+        <div className="votes-grid">
+          {votes && votes.length > 0 ? (
+            <>
+              <h5>All Votes ({votes.length}):</h5>
+              {votes.map((vote, index) => (
+                <div key={index} className="vote-result">
+                  <div className="voter-name">{vote.voter || 'Unknown'}</div>
+                  <div className={`result-card ${vote.vote || ''}`}>
+                    {vote.vote === 'unknown' ? '?' : (vote.vote || 'N/A')}
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <div className="no-votes-message">
+              <p>No votes to display</p>
+              <small>Note: Vote data may still be loading...</small>
+            </div>
           )}
         </div>
 

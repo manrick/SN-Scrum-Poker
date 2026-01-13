@@ -568,10 +568,12 @@ declare global {
                     'x_250424_sn_scrum8/____insertStyle-DIBplh3A': {
                         table: 'sys_ux_lib_asset'
                         id: '91bb79c17392405fa7ef769e26fadeb6'
+                        deleted: true
                     }
                     'x_250424_sn_scrum8/____insertStyle-DIBplh3A.js.map': {
                         table: 'sys_ux_lib_asset'
                         id: '1a1f247488ad429aa31c00f48f97b608'
+                        deleted: true
                     }
                     'x_250424_sn_scrum8/____insertStyle-DjWWheLu': {
                         table: 'sys_ux_lib_asset'
@@ -633,6 +635,14 @@ declare global {
                         id: '825702f4671d4eb5a22e8458e5dd721f'
                         deleted: true
                     }
+                    'x_250424_sn_scrum8/____insertStyle-Orb0rY-_': {
+                        table: 'sys_ux_lib_asset'
+                        id: '8fc91ad791b448db8cd51db0dca5f4d3'
+                    }
+                    'x_250424_sn_scrum8/____insertStyle-Orb0rY-_.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '81537a7f60014b9cb3fef4247fef0558'
+                    }
                     'x_250424_sn_scrum8/____insertStyle-Qvn89D64': {
                         table: 'sys_ux_lib_asset'
                         id: 'f733e5347b3641b7b244164133d98bcd'
@@ -693,6 +703,24 @@ declare global {
                         id: '34f559e2c4004bc6aeb97f164126fac7'
                         deleted: false
                     }
+                    'x_250424_sn_scrum8/ScrumMasterApp-_EzUqGT9': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'cf6d632c253d4956aa91f4e06bf96fff'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumMasterApp-_EzUqGT9.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '632a7116e83645efbc25bdfa2ca386e2'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumMasterApp-0Z2ApPY2': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'f0e90cc3fc574408a8cf07639d36b7c6'
+                    }
+                    'x_250424_sn_scrum8/ScrumMasterApp-0Z2ApPY2.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '46b86224e11942ebb457fd013d3c264f'
+                    }
                     'x_250424_sn_scrum8/ScrumMasterApp-B6oAPrn9': {
                         table: 'sys_ux_lib_asset'
                         id: '21f9f71bed284d87878448a300b48fb4'
@@ -701,6 +729,16 @@ declare global {
                     'x_250424_sn_scrum8/ScrumMasterApp-B6oAPrn9.js.map': {
                         table: 'sys_ux_lib_asset'
                         id: 'e2d63b442bf3477f86d5a61af794dddd'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumMasterApp-B8OwDmYx': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'b626aaad2eca4e90b397c599294102ae'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumMasterApp-B8OwDmYx.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '1b21b6f8faa6431790907d8100f75bf1'
                         deleted: true
                     }
                     'x_250424_sn_scrum8/ScrumMasterApp-B8yEjiE-': {
@@ -766,10 +804,12 @@ declare global {
                     'x_250424_sn_scrum8/ScrumMasterApp-BgeE4Fzj': {
                         table: 'sys_ux_lib_asset'
                         id: '5e208fd05d98473aa1daab7982116d39'
+                        deleted: true
                     }
                     'x_250424_sn_scrum8/ScrumMasterApp-BgeE4Fzj.js.map': {
                         table: 'sys_ux_lib_asset'
                         id: 'c557de497cff456db89e7157305532ea'
+                        deleted: true
                     }
                     'x_250424_sn_scrum8/ScrumMasterApp-BMRIACiR': {
                         table: 'sys_ux_lib_asset'
@@ -789,6 +829,16 @@ declare global {
                     'x_250424_sn_scrum8/ScrumMasterApp-BSxxIXcL.js.map': {
                         table: 'sys_ux_lib_asset'
                         id: '634f1007a3e14603902d4d726450a335'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumMasterApp-BxIPvdjV': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'e7ad0a1e869d4a8db06bf5f5ffbbea92'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumMasterApp-BxIPvdjV.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '43c2073f4f2b4148a0cf2830704f3994'
                         deleted: true
                     }
                     'x_250424_sn_scrum8/ScrumMasterApp-BzVT0vQg': {
@@ -859,6 +909,16 @@ declare global {
                     'x_250424_sn_scrum8/ScrumMasterApp-CobRsJZS.js.map': {
                         table: 'sys_ux_lib_asset'
                         id: '14a6a555a3d843b89b6731ad5360c1fe'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumMasterApp-CUjrUSzf': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'ec00af96f6a245cf8af84a5cddef263c'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumMasterApp-CUjrUSzf.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'e0cc682b9cf044768e2779ca853f8f0d'
                         deleted: true
                     }
                     'x_250424_sn_scrum8/ScrumMasterApp-D35R4sJS': {
@@ -1011,6 +1071,16 @@ declare global {
                         id: '28937f9591cc45239e334847ab77a110'
                         deleted: true
                     }
+                    'x_250424_sn_scrum8/ScrumUserApp-Bd0Mo7I4': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'bc4430b5cb4e465fa8d9ac19c809214c'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-Bd0Mo7I4.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '7914b1fc51b1481393220a08d2d0f854'
+                        deleted: true
+                    }
                     'x_250424_sn_scrum8/ScrumUserApp-BlEdCnmY': {
                         table: 'sys_ux_lib_asset'
                         id: '7a7dfc89d7164b5d8a463c8aae906c92'
@@ -1019,6 +1089,16 @@ declare global {
                     'x_250424_sn_scrum8/ScrumUserApp-BlEdCnmY.js.map': {
                         table: 'sys_ux_lib_asset'
                         id: 'cb1123fc9ea04e5384d4a1807ae6a963'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-Boe3e4sB': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'c083acffa1fe49eba1d541723c54e4f5'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-Boe3e4sB.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '144f783695e14d408a423d600e18eb34'
                         deleted: true
                     }
                     'x_250424_sn_scrum8/ScrumUserApp-BqRMngcR': {
@@ -1051,13 +1131,25 @@ declare global {
                         id: '6062276f09c448c9b89e02cfe483647f'
                         deleted: true
                     }
+                    'x_250424_sn_scrum8/ScrumUserApp-C2OOcRLQ': {
+                        table: 'sys_ux_lib_asset'
+                        id: '63f0fa9e6eed42e4b0de9ccc74d2ed3c'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-C2OOcRLQ.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '62584d3dd784426c9d8e2449ffe1485e'
+                        deleted: true
+                    }
                     'x_250424_sn_scrum8/ScrumUserApp-CDsVie3X': {
                         table: 'sys_ux_lib_asset'
                         id: '81bbfb0c6ee942d8b5141d13cc2c2ece'
+                        deleted: true
                     }
                     'x_250424_sn_scrum8/ScrumUserApp-CDsVie3X.js.map': {
                         table: 'sys_ux_lib_asset'
                         id: '1f68e7c6f55e4311850d9e1664b4ff46'
+                        deleted: true
                     }
                     'x_250424_sn_scrum8/ScrumUserApp-CdZNTCGJ': {
                         table: 'sys_ux_lib_asset'
@@ -1099,6 +1191,26 @@ declare global {
                         id: '000f14ca739e4581aef5bcb8f8b84bc2'
                         deleted: true
                     }
+                    'x_250424_sn_scrum8/ScrumUserApp-CmD3zaXp': {
+                        table: 'sys_ux_lib_asset'
+                        id: '7a947d133d0741759a873f7ae7648986'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-CmD3zaXp.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '821aae9a1c03444091c26b5f0601f0d6'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-CMwRMawT': {
+                        table: 'sys_ux_lib_asset'
+                        id: '4317c5ca69c9414fa66df33bb383c269'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-CMwRMawT.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '649b337acb7245e1b0454d3f81610127'
+                        deleted: true
+                    }
                     'x_250424_sn_scrum8/ScrumUserApp-cpzJ1oNt': {
                         table: 'sys_ux_lib_asset'
                         id: '346641a7b7dd4ad895b9e5b64b63fe0c'
@@ -1107,6 +1219,16 @@ declare global {
                     'x_250424_sn_scrum8/ScrumUserApp-cpzJ1oNt.js.map': {
                         table: 'sys_ux_lib_asset'
                         id: 'e6bbd7a354194ce998bd966789a72a8e'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-CsANXGa3': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'd936af16659d4227b9c6aeb32ce14384'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-CsANXGa3.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'eb60dab8bad046708a2db8bee202d2ed'
                         deleted: true
                     }
                     'x_250424_sn_scrum8/ScrumUserApp-CtlwSaFU': {
@@ -1149,6 +1271,16 @@ declare global {
                         id: '37cae10108d1439fae9848b19b36ab0a'
                         deleted: true
                     }
+                    'x_250424_sn_scrum8/ScrumUserApp-Cyt36dFV': {
+                        table: 'sys_ux_lib_asset'
+                        id: '0b49e490e95c4daab5b58d565c14fa25'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-Cyt36dFV.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '031415a4c14940e2b5b7d119933552d8'
+                        deleted: true
+                    }
                     'x_250424_sn_scrum8/ScrumUserApp-D5QQVO3l': {
                         table: 'sys_ux_lib_asset'
                         id: '7e91fa1438174987a4b7aefa02feb54a'
@@ -1169,6 +1301,26 @@ declare global {
                         id: 'd47fb0c2cc1347a799adcea07e6ad2de'
                         deleted: true
                     }
+                    'x_250424_sn_scrum8/ScrumUserApp-DfAyTNge': {
+                        table: 'sys_ux_lib_asset'
+                        id: '356803a575e447859113af1fcba998a0'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-DfAyTNge.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '9cdc19793ceb494b909bcfc95bfbe54e'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-DFoy411c': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'bd2fc76432344dceb63b7f2f00fab38d'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-DFoy411c.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'be93209ba66d46f5a2dbce22185c9d02'
+                        deleted: true
+                    }
                     'x_250424_sn_scrum8/ScrumUserApp-DILwlNhI': {
                         table: 'sys_ux_lib_asset'
                         id: '3ed94b72d1ae4bee834959dae9dbf385'
@@ -1177,6 +1329,16 @@ declare global {
                     'x_250424_sn_scrum8/ScrumUserApp-DILwlNhI.js.map': {
                         table: 'sys_ux_lib_asset'
                         id: 'bc4d50a2122841cfb04f6614560ae958'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-DO5ngYhg': {
+                        table: 'sys_ux_lib_asset'
+                        id: '44972ab522c7473c8904e85f5a043105'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-DO5ngYhg.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '0f2139a16eb0477db2d7f38f40a7f198'
                         deleted: true
                     }
                     'x_250424_sn_scrum8/ScrumUserApp-DRnyF-WV': {
@@ -1188,6 +1350,14 @@ declare global {
                         table: 'sys_ux_lib_asset'
                         id: '76b947874d154c4395f0aabf0c3781e2'
                         deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-DUE3mldb': {
+                        table: 'sys_ux_lib_asset'
+                        id: '4b981de2d7d140b1bac87c2b416f90bf'
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-DUE3mldb.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '3bf73e95c0bb42e784dbd7f44bd1054e'
                     }
                     'x_250424_sn_scrum8/ScrumUserApp-DuYCaWXC': {
                         table: 'sys_ux_lib_asset'
@@ -1217,6 +1387,56 @@ declare global {
                     'x_250424_sn_scrum8/ScrumUserApp-EPhWVzPf.js.map': {
                         table: 'sys_ux_lib_asset'
                         id: '7d87b4e8e2cd4fec80d00ded9817d4cd'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-iCP1G66A': {
+                        table: 'sys_ux_lib_asset'
+                        id: '314437502aa8424691ac7daad34599c2'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-iCP1G66A.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '2f3a022237c047b2bb93c19bf94cc95e'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-kMIXCwcj': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'd20b1797611548cd85a17367b5613189'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-kMIXCwcj.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'b6782a96575247179cbfec9427599788'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-nEvcicHb': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'e7f70da077a04e4ca99f3b5d7c768596'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-nEvcicHb.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '68f4b3b37c19455fabeb88eb19bea405'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-rdevQqgz': {
+                        table: 'sys_ux_lib_asset'
+                        id: '774a73a6c4de4178bdfd1c94044a5f4b'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-rdevQqgz.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: '3851203bd9264259a9cf0f307df20b15'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-t9iJS5DQ': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'f8827319fbb949459cbb0305ba314a0d'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-t9iJS5DQ.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'afa1f0833d9147c5a4acb80724019aaa'
                         deleted: true
                     }
                     'x_250424_sn_scrum8/ScrumUserApp-vCxQwNAX': {
@@ -1257,6 +1477,16 @@ declare global {
                     'x_250424_sn_scrum8/ScrumUserApp-ZD_7Y5Zw.js.map': {
                         table: 'sys_ux_lib_asset'
                         id: '8ae8d18bcb3c46729fd3d367f6c04ff5'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-ZmWcKXMU': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'f5c789c5f81c4c0598a4dbb86e36b179'
+                        deleted: true
+                    }
+                    'x_250424_sn_scrum8/ScrumUserApp-ZmWcKXMU.js.map': {
+                        table: 'sys_ux_lib_asset'
+                        id: 'afb1cce57c9d4ea69051db43cbcb50c3'
                         deleted: true
                     }
                 }
@@ -1589,6 +1819,14 @@ declare global {
                         key: {
                             name: 'x_250424_sn_scrum8_poker_vote'
                             element: 'story'
+                        }
+                    },
+                    {
+                        table: 'sys_choice_set'
+                        id: '710fe778958a48afbffc3f5d76000d1f'
+                        key: {
+                            name: 'x_250424_sn_scrum8_poker_session'
+                            element: 'state'
                         }
                     },
                     {
@@ -1947,6 +2185,14 @@ declare global {
                             name: 'x_250424_sn_scrum8_poker_session'
                             element: 'session_name'
                             language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_choice_set'
+                        id: 'd9665536b39849268f9137e3b3e5223b'
+                        key: {
+                            name: 'x_250424_sn_scrum8_poker_vote'
+                            element: 'vote_value'
                         }
                     },
                     {

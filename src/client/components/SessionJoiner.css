@@ -5,6 +5,11 @@
   min-height: 60vh;
 }
 
+.king-card {
+  height: auto;
+  width: 70px;
+}
+
 .joiner-card {
   background: white;
   border-radius: 16px;

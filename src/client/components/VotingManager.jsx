@@ -7,7 +7,7 @@ export default function VotingManager({
   story, 
   sessionState, 
   votingStartTime, 
-  votingDuration = 20, // Changed default from 300 to 20 seconds
+  votingDuration = 20,
   voteCount, 
   participantCount, 
   votes, 
@@ -20,15 +20,60 @@ export default function VotingManager({
   const [timeRemaining, setTimeRemaining] = useState(votingDuration);
   const [selectedFinalPoints, setSelectedFinalPoints] = useState('');
 
+  console.log('VotingManager render:', {
+    sessionState,
+    votingStartTime: votingStartTime ? votingStartTime.toString() : 'null',
+    votingDuration,
+    timeRemaining
+  });
+
+  // FIXED: Better timer initialization and management
   useEffect(() => {
     if (sessionState === 'active' && votingStartTime) {
-      const interval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - votingStartTime.getTime()) / 1000);
-        const remaining = Math.max(0, votingDuration - elapsed);
-        setTimeRemaining(remaining);
-      }, 100);
+      console.log('VotingManager: Starting timer with:', {
+        votingStartTime: votingStartTime.toString(),
+        votingDuration
+      });
 
-      return () => clearInterval(interval);
+      // Calculate initial time remaining
+      const now = Date.now();
+      const elapsed = Math.floor((now - votingStartTime.getTime()) / 1000);
+      const initial = Math.max(0, votingDuration - elapsed);
+      
+      console.log('VotingManager: Initial timer calculation:', {
+        now: new Date(now).toString(),
+        elapsed,
+        initial
+      });
+
+      setTimeRemaining(initial);
+
+      const interval = setInterval(() => {
+        const currentElapsed = Math.floor((Date.now() - votingStartTime.getTime()) / 1000);
+        const remaining = Math.max(0, votingDuration - currentElapsed);
+        
+        console.log('VotingManager: Timer tick:', {
+          currentElapsed,
+          remaining,
+          votingDuration
+        });
+        
+        setTimeRemaining(remaining);
+        
+        if (remaining <= 0) {
+          console.log('VotingManager: Timer expired');
+          clearInterval(interval);
+        }
+      }, 1000); // Update every second
+
+      return () => {
+        console.log('VotingManager: Cleaning up timer interval');
+        clearInterval(interval);
+      };
+    } else {
+      // Reset timer when not in active state
+      console.log('VotingManager: Resetting timer to duration:', votingDuration);
+      setTimeRemaining(votingDuration);
     }
   }, [sessionState, votingStartTime, votingDuration]);
 

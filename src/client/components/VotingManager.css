@@ -294,3 +294,20 @@
   background: #a0aec0;
   cursor: not-allowed;
 }
+
+.restart-voting-button {
+  background: #48bb78;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: background-color 0.2s;
+}
+
+.restart-voting-button:hover:not(:disabled) {
+  background: #38a169;
+}

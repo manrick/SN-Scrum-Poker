@@ -10,7 +10,7 @@ export default function ScrumUserAppWebSocket() {
   const [sessionState, setSessionState] = useState('waiting');
   const [currentStory, setCurrentStory] = useState(null);
   const [votingStartTime, setVotingStartTime] = useState(null);
-  const [votingDuration, setVotingDuration] = useState(300);
+  const [votingDuration, setVotingDuration] = useState(20);
   const [hasVoted, setHasVoted] = useState(false);
   const [userVoteValue, setUserVoteValue] = useState(''); // Track what the user voted
   const [votes, setVotes] = useState([]);
@@ -26,7 +26,9 @@ export default function ScrumUserAppWebSocket() {
     ambInitialized,
     currentStory: currentStory ? currentStory.number : 'none',
     hasVoted,
-    userVoteValue
+    userVoteValue,
+    votingStartTime,
+    votingDuration
   });
 
   // Initialize AMB and track initialization status
@@ -81,6 +83,10 @@ export default function ScrumUserAppWebSocket() {
       try {
         console.log('ScrumUserApp: Setting up session watchers for session:', currentSession.id);
         
+        // Check if current user is scrum master
+        const isScrumMaster = currentSession.isMaster !== false;
+        console.log('ScrumUserApp: Current user is scrum master:', isScrumMaster);
+        
         // Get initial session status
         const statusResult = await service.getSessionStatus(currentSession.id);
         console.log('ScrumUserApp: Initial session status:', statusResult);
@@ -115,6 +121,14 @@ export default function ScrumUserAppWebSocket() {
             
             onVotesUpdate: async ({ operation, vote }) => {
               console.log('ScrumUserApp: Votes update received:', operation, vote);
+              
+              // Only process vote updates if current user is scrum master
+              if (!isScrumMaster) {
+                console.log('ScrumUserApp: Ignoring vote update - current user is not scrum master');
+                return;
+              }
+              
+              console.log('ScrumUserApp: Processing vote update for scrum master');
               if (mounted) {
                 // If someone votes, we might want to refresh session status for vote count
                 try {
@@ -191,7 +205,7 @@ export default function ScrumUserAppWebSocket() {
     const newState = statusResult.state || 'waiting';
     console.log('ScrumUserApp: Setting session state to:', newState, typeof newState);
     setSessionState(newState);
-    setVotingDuration(statusResult.voting_duration || 300);
+    setVotingDuration(statusResult.voting_duration || 20);
     
     if (statusResult.current_story && statusResult.story_details) {
       const newStory = {
@@ -200,9 +214,9 @@ export default function ScrumUserAppWebSocket() {
       };
       console.log('ScrumUserApp: Setting current story:', newStory);
       
-      // TARGETED FIX: Only reset vote status if it's actually a different story
+      // Only reset vote status if it's actually a different story
       if (!currentStory || currentStory.id !== newStory.id) {
-        console.log('ScrumUserApp: New story, resetting vote status');
+        console.log('ScrumUserApp: New story detected, resetting vote status');
         setHasVoted(false);
         setUserVoteValue('');
       } else {
@@ -211,8 +225,9 @@ export default function ScrumUserAppWebSocket() {
       }
       
       setCurrentStory(newStory);
-    } else {
-      console.log('ScrumUserApp: Clearing current story');
+    } else if (!statusResult.current_story) {
+      // Only clear story and vote status if there's no current story
+      console.log('ScrumUserApp: No current story, clearing story and vote status');
       setCurrentStory(null);
       setHasVoted(false);
       setUserVoteValue('');
@@ -242,23 +257,20 @@ export default function ScrumUserAppWebSocket() {
     console.log('ScrumUserApp: Extracted record:', record);
     
     if (record.state) {
-      // FIXED: Use the user's working solution for state extraction
+      // Use the user's working solution for state extraction
       const newState = record.state;
       const stateValue = newState.value ? newState.value : newState;
       console.log('ScrumUserApp: AMB state change to:', stateValue);
       setSessionState(stateValue);
       
-      // If state changed to a new story, only reset if it's actually different
-      if (stateValue === 'active' && record.current_story !== currentStory?.id) {
-        console.log('ScrumUserApp: New active story, resetting vote status');
-        setHasVoted(false);
-        setUserVoteValue('');
-      }
+      // Don't reset vote status just because state changed - only if it's a new story
+      // The story comparison will be handled in updateSessionFromStatus
+      console.log('ScrumUserApp: State changed via AMB, preserving vote status unless story changes');
     }
     
     if (record.voting_duration) {
       const duration = record.voting_duration.value ? record.voting_duration.value : record.voting_duration;
-      setVotingDuration(parseInt(duration) || 300);
+      setVotingDuration(parseInt(duration) || 20);
     }
     
     if (record.voting_started_at) {
@@ -270,7 +282,7 @@ export default function ScrumUserAppWebSocket() {
     
     // If story changed, need to fetch story details via API
     const recordStoryId = record.current_story?.value || record.current_story;
-    if (recordStoryId !== currentStory?.id) {
+    if (recordStoryId && recordStoryId !== currentStory?.id) {
       console.log('ScrumUserApp: Story changed in record, fetching details...');
       service.getSessionStatus(currentSession.id)
         .then(statusResult => {
