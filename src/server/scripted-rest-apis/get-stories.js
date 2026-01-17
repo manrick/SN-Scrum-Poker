@@ -14,7 +14,8 @@
                 number: storyGr.getValue('number'),
                 short_description: storyGr.getValue('short_description'),
                 description: storyGr.getValue('description'),
-                story_points: storyGr.getValue('story_points')
+                story_points: storyGr.getValue('story_points'),
+                acceptance_criteria: storyGr.getValue('acceptance_criteria') 
             })
         }
         

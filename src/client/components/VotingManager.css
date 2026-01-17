@@ -30,12 +30,13 @@
 }
 
 .story-info {
-  display: flex;
+  /*display: flex;*/
   gap: 1rem;
   align-items: flex-start;
 }
 
 .story-number {
+  width: 150px;
   background: #667eea;
   color: white;
   padding: 0.5rem 1rem;
@@ -148,14 +149,14 @@
 }
 
 .votes-revealed {
-  background: #fff5b7;
+  background: #DCE3FF;
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
 }
 
 .votes-revealed h4 {
-  color: #744210;
+  color: #054A6C;
   font-size: 1.4rem;
   margin-bottom: 2rem;
   text-align: center;
@@ -209,7 +210,7 @@
 }
 
 .vote-summary h5 {
-  color: #744210;
+  color: #054A6C;
   margin-bottom: 1rem;
 }
 
@@ -228,7 +229,7 @@
 }
 
 .suggested-value {
-  color: #744210;
+  color: #054A6C;
   font-size: 1.1rem;
 }
 
@@ -239,7 +240,7 @@
 }
 
 .finalize-section h5 {
-  color: #744210;
+  color: #054A6C;
   margin-bottom: 1.5rem;
 }
 
@@ -296,7 +297,7 @@
 }
 
 .restart-voting-button {
-  background: #48bb78;
+  background: #0875AB;
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -309,5 +310,27 @@
 }
 
 .restart-voting-button:hover:not(:disabled) {
-  background: #38a169;
+  background: #054A6C;
+}
+
+.sn-result-card {
+  height: auto;
+  width: 70px;
+}
+
+.select-different-story-button {
+  background: #1B919B;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: background-color 0.2s;
+}
+
+.restart-voting-button:hover:not(:disabled) {
+  background: #126167;
 }

@@ -60,7 +60,7 @@
 }
 
 .story-number {
-  background: #667eea;
+  background: #62D84E !important;
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
@@ -69,7 +69,7 @@
 }
 
 .current-points {
-  background: #48bb78;
+  background: #667eea;
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 20px;

@@ -217,7 +217,8 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
           id: story.sys_id,
           number: story.number,
           short_description: story.short_description,
-          description: story.description
+          description: story.description,
+          acceptance_criteria: story.acceptance_criteria
         });
         setSessionState('story_selected');
         setVotes([]);
@@ -392,13 +393,18 @@ export default function SessionManagerWebSocket({ service, session, onBackToStar
           {sessionState === 'story_selected' && isScrumMaster && currentStory && (
             <div className="story-ready">
               <div className="story-display">
-                <h3>Story Selected</h3>
+                <div className="story-number">{currentStory.number}</div>
                 <div className="story-info">
-                  <div className="story-number">{currentStory.number}</div>
                   <div className="story-description">
-                    <h4>{currentStory.short_description}</h4>
+                    <h5>{currentStory.short_description}</h5>
                     {currentStory.description && (
                       <p className="story-details">{currentStory.description}</p>
+                    )}
+                    <h5>Acceptance criteria</h5>
+                    {currentStory.acceptance_criteria && (
+                      <p className="story-details">
+                        <div dangerouslySetInnerHTML={{ __html: currentStory.acceptance_criteria }} />
+                      </p>
                     )}
                   </div>
                 </div>

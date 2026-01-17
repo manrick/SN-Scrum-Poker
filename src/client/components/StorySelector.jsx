@@ -61,6 +61,7 @@ export default function StorySelector({ service, onStorySelected }) {
   const getSafeShortDescription = (story) => getSafeValue(story?.short_description);
   const getSafeDescription = (story) => getSafeValue(story?.description);
   const getSafeStoryPoints = (story) => getSafeValue(story?.story_points);
+  const getSafeAcceptanceCriteria = (story) => getSafeValue(story?.acceptance_criteria);
 
   // Defensive programming: ensure stories is always an array before filtering
   const safeStories = Array.isArray(stories) ? stories : [];
@@ -82,7 +83,9 @@ export default function StorySelector({ service, onStorySelected }) {
       sys_id: getSafeStoryId(story),
       number: getSafeNumber(story),
       short_description: getSafeShortDescription(story),
-      description: getSafeDescription(story)
+      description: getSafeDescription(story),
+      acceptance_criteria: getSafeAcceptanceCriteria(story)
+      
     });
   };
 

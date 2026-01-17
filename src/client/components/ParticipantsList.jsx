@@ -23,11 +23,24 @@ export default function ParticipantsList({ participants = [] }) {
           {safeParticipants.map((participant, index) => {
             const safeName = getSafeName(participant);
             const userId = participant?.user_id || participant?.sys_id || index;
+            const avatarUrl = participant?.avatarPath;
             
             return (
               <div key={userId} className="participant-item">
                 <div className="participant-avatar">
-                  {safeName.charAt(0).toUpperCase()}
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={safeName}
+                    style={{
+                      width: "inherit",
+                      height: "inherit",
+                      borderRadius: "inherit",
+                    }}
+                  />
+                ) : (
+                  safeName.charAt(0).toUpperCase()
+                )}
                 </div>
                 <div className="participant-info">
                   <div className="participant-name">{safeName}</div>
@@ -41,10 +54,6 @@ export default function ParticipantsList({ participants = [] }) {
           })}
         </div>
       )}
-      
-      <div className="share-info">
-        <p>Share the session code with your team members so they can join and vote!</p>
-      </div>
     </div>
   );
 }

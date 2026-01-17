@@ -48,11 +48,11 @@ export default function VotingTimer({
       const currentElapsed = Math.floor((Date.now() - votingStartTime.getTime()) / 1000);
       const remaining = Math.max(0, votingDuration - currentElapsed);
       
-      console.log('VotingTimer: Tick', {
+      /*console.log('VotingTimer: Tick', {
         currentElapsed,
         remaining,
         votingDuration
-      });
+      });*/
       
       setTimeRemaining(remaining);
       
@@ -88,12 +88,12 @@ export default function VotingTimer({
 
   const isTimeUp = timeRemaining <= 0 && isRunning;
 
-  console.log('VotingTimer render:', {
+  /*console.log('VotingTimer render:', {
     timeRemaining,
     isRunning,
     isTimeUp,
     votingDuration
-  });
+  });*/
 
   return (
     <div className={`voting-timer ${className} ${isTimeUp ? 'expired' : ''}`}>

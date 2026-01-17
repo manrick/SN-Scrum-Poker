@@ -1,41 +1,85 @@
+/* ServiceNow Design System Variables */
+:root {
+  --sn-primary-blue: #0066cc;
+  --sn-primary-blue-dark: #0052a3;
+  --sn-primary-blue-light: #4d94d6;
+  --sn-success-green: #28a745;
+  --sn-warning-orange: #ffa500;
+  --sn-danger-red: #dc3545;
+  --sn-neutral-white: #ffffff;
+  --sn-neutral-gray-50: #f8f9fa;
+  --sn-neutral-gray-100: #e9ecef;
+  --sn-neutral-gray-200: #dee2e6;
+  --sn-neutral-gray-300: #ced4da;
+  --sn-neutral-gray-400: #6c757d;
+  --sn-neutral-gray-500: #495057;
+  --sn-neutral-gray-600: #343a40;
+  --sn-neutral-gray-700: #212529;
+  --sn-text-primary: #212529;
+  --sn-text-secondary: #6c757d;
+  --sn-border-color: #dee2e6;
+  --sn-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --sn-shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --sn-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+}
+
 .session-joiner {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 60vh;
+  padding: 2rem 1rem;
 }
 
 .king-card {
   height: auto;
-  width: 70px;
+  width: 150px;
+  filter: drop-shadow(0 0.125rem 0.25rem rgba(0, 0, 0, 0.1));
 }
 
 .joiner-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  padding: 3rem;
-  max-width: 400px;
+  background: var(--sn-neutral-white);
+  border: 1px solid var(--sn-border-color);
+  border-radius: 8px;
+  box-shadow: var(--sn-shadow-lg);
+  padding: 2.5rem 2rem;
+  max-width: 420px;
   width: 100%;
   text-align: center;
+  position: relative;
+}
+
+.joiner-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background-color: #62D84E;
+  border-radius: 8px 8px 0 0;
 }
 
 .poker-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--sn-primary-blue);
+  display: block;
 }
 
 .joiner-card h2 {
-  color: #2d3748;
-  font-size: 2rem;
-  font-weight: 600;
+  color: var(--sn-text-primary);
+  font-size: 1.75rem;
+  font-weight: 700;
   margin-bottom: 1rem;
+  line-height: 1.2;
 }
 
 .joiner-card > p {
-  color: #718096;
+  color: var(--sn-text-secondary);
   margin-bottom: 2rem;
   line-height: 1.6;
+  font-size: 1rem;
 }
 
 .form-group {
@@ -45,82 +89,173 @@
 
 .form-group label {
   display: block;
-  color: #4a5568;
-  font-weight: 500;
+  color: var(--sn-text-primary);
+  font-weight: 600;
   margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .session-code-input {
   width: 100%;
-  padding: 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--sn-border-color);
+  border-radius: 6px;
+  font-size: 1.25rem;
   font-weight: 600;
   text-align: center;
-  font-family: 'Courier New', monospace;
-  letter-spacing: 0.1em;
-  transition: border-color 0.2s;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
   box-sizing: border-box;
+  background: var(--sn-neutral-white);
+  color: var(--sn-text-primary);
 }
 
 .session-code-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--sn-primary-blue);
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+  transform: translateY(-1px);
 }
 
 .session-code-input:disabled {
-  background-color: #f7fafc;
+  background-color: var(--sn-neutral-gray-100);
+  color: var(--sn-text-secondary);
   cursor: not-allowed;
+  border-color: var(--sn-neutral-gray-200);
 }
 
 .join-button {
   width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--sn-primary-blue);
+  color: var(--sn-neutral-white);
   border: none;
-  padding: 1rem;
-  border-radius: 8px;
-  font-size: 1.2rem;
+  padding: 0.875rem 1rem;
+  border-radius: 6px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.join-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
 }
 
 .join-button:hover:not(:disabled) {
+  background: var(--sn-primary-blue-dark);
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--sn-shadow-md);
+}
+
+.join-button:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.join-button:active:not(:disabled) {
+  transform: translateY(-1px);
 }
 
 .join-button:disabled {
-  background: #a0aec0;
+  background: var(--sn-neutral-gray-300);
+  color: var(--sn-text-secondary);
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 .help-section {
   margin-top: 2rem;
   padding-top: 2rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--sn-border-color);
 }
 
 .help-section h3 {
-  color: #4a5568;
-  font-size: 1.1rem;
+  color: var(--sn-text-primary);
+  font-size: 1rem;
+  font-weight: 600;
   margin-bottom: 1rem;
 }
 
 .help-section p {
-  color: #718096;
+  color: var(--sn-text-secondary);
   line-height: 1.6;
   margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Loading state */
+.join-button.loading {
+  position: relative;
+  color: transparent;
+}
+
+.join-button.loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--sn-neutral-white);
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Success state animation */
+.joiner-card.success {
+  animation: successPulse 0.6s ease-out;
+}
+
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* Error state */
+.joiner-card.error .session-code-input {
+  border-color: var(--sn-danger-red);
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
 /* Mobile responsiveness */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
+  .session-joiner {
+    min-height: 50vh;
+    padding: 1rem;
+  }
+  
   .joiner-card {
     padding: 2rem 1.5rem;
+    max-width: 100%;
   }
   
   .poker-icon {
@@ -129,5 +264,29 @@
   
   .joiner-card h2 {
     font-size: 1.5rem;
+  }
+  
+  .session-code-input {
+    font-size: 1.125rem;
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .joiner-card {
+    padding: 1.5rem 1rem;
+  }
+  
+  .poker-icon {
+    font-size: 2.5rem;
+  }
+  
+  .joiner-card h2 {
+    font-size: 1.25rem;
+  }
+  
+  .session-code-input {
+    font-size: 1rem;
+    letter-spacing: 0.1em;
   }
 }

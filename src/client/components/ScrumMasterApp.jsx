@@ -104,7 +104,7 @@ export default function ScrumMasterApp() {
   return (
     <div className="scrum-master-app">
       <header className="app-header">
-        <h1><img className="king-card-header" src="x_250424_sn_scrum8.card_king.svg"></img> Scrum Poker (Scrum master view)</h1>
+        <h1><img className="king-card-header" src="x_250424_sn_scrum8.sn-scrum-poker-cards.png"></img> Scrum Poker (Scrum master view)</h1>
         <p>Manage your story estimation sessions with real-time updates</p>
         <div className={`websocket-status ${ambInitialized ? connectionStatus : 'initializing'}`}>
           <span className="status-icon">{getConnectionIcon()}</span>

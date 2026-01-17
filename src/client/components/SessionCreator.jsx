@@ -170,10 +170,6 @@ export default function SessionCreator({ service, onSessionCreated, loading, set
             </div>
           </>
         )}
-        
-        <div className="debug-section" style={{ marginTop: '2rem', fontSize: '0.8rem', color: '#666' }}>
-          <p>Debug Info: Using API endpoint '/api/x_250424_sn_scrum8/scrum_poker'</p>
-        </div>
       </div>
     </div>
   );

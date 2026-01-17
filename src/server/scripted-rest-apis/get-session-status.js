@@ -18,7 +18,8 @@
                     responseData.story_details = {
                         number: storyGr.getValue('number'),
                         short_description: storyGr.getValue('short_description'),
-                        description: storyGr.getValue('description')
+                        description: storyGr.getValue('description'),
+                        acceptance_criteria: storyGr.getValue('acceptance_criteria') 
                     }
                 }
             }

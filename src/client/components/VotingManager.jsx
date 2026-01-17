@@ -135,7 +135,6 @@ export default function VotingManager({
   return (
     <div className="voting-manager">
       <div className="story-display">
-        <h3>Current Story</h3>
         <div className="story-info">
           <div className="story-number">{storyNumber}</div>
           <div className="story-description">
@@ -234,7 +233,7 @@ export default function VotingManager({
                   <div key={index} className="vote-card">
                     <div className="voter-name">{vote.voter || 'Unknown'}</div>
                     <div className={`vote-value ${vote.vote}`}>
-                      {vote.vote === 'unknown' ? '?' : vote.vote}
+                    <img className="sn-result-card" src={vote.vote === 'unknown' ? 'x_250424_sn_scrum8.card_unknown.svg' : ('x_250424_sn_scrum8.card_' + vote.vote + ".svg" || 'N/A')}></img>
                     </div>
                   </div>
                 ))}

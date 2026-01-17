@@ -1,46 +1,155 @@
+/* ServiceNow Design System Timer Styles */
+:root {
+  --sn-primary-blue: #0066cc;
+  --sn-success-green: #28a745;
+  --sn-warning-orange: #ffa500;
+  --sn-danger-red: #dc3545;
+  --sn-neutral-white: #ffffff;
+  --sn-neutral-gray-100: #e9ecef;
+  --sn-neutral-gray-200: #dee2e6;
+  --sn-text-primary: #212529;
+  --sn-text-secondary: #6c757d;
+}
+
 .voting-timer {
-  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--sn-neutral-white);
+  border: 1px solid var(--sn-neutral-gray-200);
+  border-radius: 6px;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
 .timer-display {
-  text-align: center;
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .timer-text {
-  font-size: 1.2em;
-  font-weight: bold;
-  color: #333;
-  transition: color 0.3s ease;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--sn-text-primary);
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  background: var(--sn-neutral-gray-100);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  min-width: 60px;
+  text-align: center;
+  transition: all 0.3s ease;
 }
 
 .timer-text.time-up {
-  color: #e74c3c;
+  background: var(--sn-danger-red);
+  color: var(--sn-neutral-white);
+  animation: pulse-urgent 1s ease-in-out infinite alternate;
 }
 
 .timer-bar {
-  width: 100%;
-  height: 8px;
-  background-color: #ecf0f1;
-  border-radius: 4px;
+  width: 120px;
+  height: 6px;
+  background-color: var(--sn-neutral-gray-200);
+  border-radius: 3px;
   overflow: hidden;
+  position: relative;
 }
 
 .timer-progress {
   height: 100%;
-  background-color: #3498db;
-  transition: width 0.1s ease-out, background-color 0.3s ease;
+  background: linear-gradient(90deg, var(--sn-success-green) 0%, var(--sn-primary-blue) 100%);
+  transition: width 0.1s ease-out, background 0.3s ease;
+  border-radius: 3px;
 }
 
 .timer-progress.expired {
-  background-color: #e74c3c;
+  background: var(--sn-danger-red);
+  animation: flash 0.5s ease-in-out infinite alternate;
+}
+
+.voting-timer.expired {
+  border-color: var(--sn-danger-red);
+  background: #f8d7da;
 }
 
 .voting-timer.expired .timer-display {
-  animation: pulse 1s ease-in-out infinite alternate;
+  animation: shake 0.5s ease-in-out infinite;
 }
 
-@keyframes pulse {
+/* Timer states based on remaining time */
+.voting-timer[data-remaining-percentage="25"] .timer-progress {
+  background: linear-gradient(90deg, var(--sn-warning-orange) 0%, var(--sn-danger-red) 100%);
+}
+
+.voting-timer[data-remaining-percentage="10"] .timer-progress {
+  background: var(--sn-danger-red);
+  animation: pulse-warning 0.8s ease-in-out infinite alternate;
+}
+
+/* Animations */
+@keyframes pulse-urgent {
+  from { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  to { 
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes flash {
   from { opacity: 1; }
   to { opacity: 0.6; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+@keyframes pulse-warning {
+  from { opacity: 1; }
+  to { opacity: 0.7; }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .voting-timer {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .timer-text {
+    font-size: 0.875rem;
+    min-width: 50px;
+  }
+  
+  .timer-bar {
+    width: 100px;
+    height: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .voting-timer {
+    padding: 0.5rem;
+  }
+  
+  .timer-display {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .timer-bar {
+    width: 80px;
+    height: 4px;
+  }
+  
+  .timer-text {
+    font-size: 0.75rem;
+    min-width: 45px;
+  }
 }

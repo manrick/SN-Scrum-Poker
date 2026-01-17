@@ -214,7 +214,7 @@ export default function VotingInterface({
           <div className="voted-state">
             <div className="voted-card">
               <div className={`selected-card ${selectedVote}`}>
-                {selectedVote === 'unknown' ? '?' : selectedVote}
+                <img className="sn-result-card-selected" src={selectedVote === 'unknown' ? 'x_250424_sn_scrum8.card_unknown.svg' : ('x_250424_sn_scrum8.card_' + selectedVote + ".svg" || 'N/A')}></img>
               </div>
               <p>✅ Vote submitted!</p>
               <span>Waiting for others to vote...</span>
@@ -225,13 +225,15 @@ export default function VotingInterface({
             <h4>Select your estimate:</h4>
             <div className="cards-grid">
               {FIBONACCI_CARDS.map(card => (
+                
                 <button
                   key={card.value}
                   className={`poker-card ${selectedVote === card.value ? 'selected' : ''} ${submittingVote ? 'disabled' : ''}`}
                   onClick={() => handleCardClick(card.value)}
                   disabled={submittingVote || timeExpired}
                 >
-                  <span className="card-value">{card.label}</span>
+                  <img className="sn-result-card-selected" src={card.value === 'unknown' ? 'x_250424_sn_scrum8.card_unknown.svg' : ('x_250424_sn_scrum8.card_' + card.value + ".svg" || 'N/A')}></img>
+                  
                 </button>
               ))}
             </div>
@@ -261,14 +263,14 @@ export default function VotingInterface({
           <h4>🎯 Vote Results</h4>
         </div>
 
-        {hasVoted && userVoteValue && (
+        {/*hasVoted && userVoteValue && (
           <div className="user-vote-display">
             <h5>Your Vote:</h5>
             <div className={`user-vote-card ${userVoteValue}`}>
               {userVoteValue === 'unknown' ? '?' : userVoteValue}
             </div>
           </div>
-        )}
+        )*/}
 
         <div className="votes-grid">
           {votes && votes.length > 0 ? (
@@ -278,7 +280,7 @@ export default function VotingInterface({
                 <div key={index} className="vote-result">
                   <div className="voter-name">{vote.voter || 'Unknown'}</div>
                   <div className={`result-card ${vote.vote || ''}`}>
-                    {vote.vote === 'unknown' ? '?' : (vote.vote || 'N/A')}
+                    <img className="sn-result-card" src={vote.vote === 'unknown' ? 'x_250424_sn_scrum8.card_unknown.svg' : ('x_250424_sn_scrum8.card_' + vote.vote + ".svg" || 'N/A')}></img>
                   </div>
                 </div>
               ))}

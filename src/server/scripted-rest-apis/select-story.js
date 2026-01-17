@@ -31,7 +31,8 @@
                     sys_id: storyGr.sys_id.toString(),
                     number: storyGr.number.toString(),
                     short_description: storyGr.short_description.toString(),
-                    description: storyGr.description ? storyGr.description.toString() : ''
+                    description: storyGr.description ? storyGr.description.toString() : '',
+                    acceptance_criteria: storyGr.getValue('acceptance_criteria') 
                 }
                 
                 response.setStatus(200)

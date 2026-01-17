@@ -319,7 +319,7 @@ export default function ScrumUserApp() {
   return (
     <div className="scrum-user-app">
       <header className="app-header">
-        <h1><img className="king-card-header" src="x_250424_sn_scrum8.card_king.svg"></img> Scrum Poker (Scrum user view)</h1>
+        <h1><img className="king-card-header" src="x_250424_sn_scrum8.sn-scrum-poker-cards.png"></img> Scrum Poker (Scrum user view)</h1>
         {currentSession && (
           <div className="session-info">
             <span className="session-name">{currentSession.name}</span>

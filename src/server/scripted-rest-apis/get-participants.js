@@ -14,7 +14,8 @@
                 participants.push({
                     user_id: participantGr.getValue('user'),
                     name: userGr.getDisplayValue(),
-                    joined_at: participantGr.getValue('joined_at')
+                    joined_at: participantGr.getValue('joined_at'),
+                    avatarPath: GlideAvatarFinder.getAvatarPath(userGr.getUniqueValue()) + ""
                 })
             }
         }
