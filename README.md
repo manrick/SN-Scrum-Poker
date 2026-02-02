@@ -1,6 +1,6 @@
 # 🃏 SN Scrum Poker
 
-A real-time story estimation tool for ServiceNow, built as an experiment with the **Build Agent** (aka "Bernie").
+A real-time story estimation tool for ServiceNow, built as an experiment with the **Build Agent**.
 
 ### 🚀 Key Features
 * **Real-time Voting:** Powered by WebSockets (AMB).
